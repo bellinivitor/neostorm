@@ -152,3 +152,29 @@ vim.api.nvim_create_autocmd("WinClosed", {
   group = group,
   callback = function(ev) known[tonumber(ev.match)] = nil end,
 })
+
+-- Toda janela normal ganha o tom de ilha (a cor padrão, Normal, é o fundo escuro).
+-- Janelas que já mapeiam Normal (painéis, barra lateral, Projeto) ficam como estão;
+-- as que trocam o winhighlight sem Normal (diff, plugins) recebem Island na frente.
+local function island(w)
+  if not vim.api.nvim_win_is_valid(w) or vim.api.nvim_win_get_config(w).relative ~= "" then return end
+  local whl = vim.wo[w].winhighlight
+  if ("," .. whl):find(",Normal:", 1, true) then return end
+  vim.wo[w].winhighlight = "Normal:Island,NormalNC:Island" .. (whl ~= "" and ("," .. whl) or "")
+end
+vim.api.nvim_create_autocmd({ "VimEnter", "WinNew", "WinEnter", "BufWinEnter" }, {
+  group = group,
+  callback = function()
+    vim.schedule(function()
+      for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do island(w) end
+    end)
+  end,
+})
+vim.api.nvim_create_autocmd("OptionSet", {
+  group = group,
+  pattern = "winhighlight",
+  callback = function()
+    local w = vim.api.nvim_get_current_win()
+    vim.schedule(function() island(w) end)
+  end,
+})

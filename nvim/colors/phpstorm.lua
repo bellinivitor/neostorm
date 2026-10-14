@@ -11,8 +11,11 @@ local function hl(group, opts) vim.api.nvim_set_hl(0, group, opts) end
 local function link(group, target) vim.api.nvim_set_hl(0, group, { link = target }) end
 
 -- Editor
-hl("Normal", { fg = c.fg, bg = c.bg })
-hl("NormalNC", { fg = c.fg, bg = c.bg })
+-- A cor padrão é o fundo escuro (canvas): o Neovide pinta margens e a sobra da borda
+-- com ela. Cada janela recebe o tom de ilha via winhighlight (Island, em autocmds.lua)
+hl("Normal", { fg = c.fg, bg = c.canvas })
+hl("NormalNC", { fg = c.fg, bg = c.canvas })
+hl("Island", { fg = c.fg, bg = c.bg })
 hl("NormalFloat", { fg = c.fg, bg = c.bg_float })
 hl("FloatBorder", { fg = c.border, bg = c.bg_float })
 hl("FloatTitle", { fg = c.fg, bg = c.bg_float, bold = true })
