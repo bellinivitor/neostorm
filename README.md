@@ -51,8 +51,11 @@ cd ~/neostorm && git add -A && git commit -m "descrição" && git push
 - **Contagem de usos** acima de classes e métodos (`3 usos`, `sem usos`); em controllers soma as **rotas** que
   apontam para cada classe/método (`7 rotas`).
 - **Imports do PHP dobrados** em `use ...` ao abrir o arquivo (`zo` abre, `zc` fecha).
-- **Rename** de métodos, variáveis, propriedades e classes em todo o projeto (Phpactor, só para isso;
-  o resto vem do Intelephense).
+- **Rename** de métodos, variáveis, propriedades e classes em todo o projeto (Phpactor; o resto vem do Intelephense).
+- **Refactor This** (`Ctrl+T`): com seleção, Extract Method e Introduce Variable (pede o nome); sem seleção,
+  Rename, Introduce Constant, Complete/Promote Constructor, Add Missing Properties, Implement Methods,
+  Generate Getters/Setters (`getTotal()`), Override Method, Add Return Types, Import Missing Classes e
+  Fix Class Name and Namespace. Tudo pelo Phpactor.
 - **Optimize Imports** (remove `use` sem uso e ordena), Reformat Code, ações de código (`Alt+Enter`).
 - Autocomplete (blink.cmp), com sugestões de views, rotas, componentes e configs do Laravel (blade-nav).
 - Barras do git na margem, clicáveis (ver diff / rollback da alteração).
@@ -152,7 +155,8 @@ cd ~/neostorm && git add -A && git commit -m "descrição" && git push
 | `Cmd+B` / `Cmd+clique` | Go to Declaration or Usages (entende rotas, Policies e `route()`) |
 | `Cmd+Option+B` / `gi` | Go to Implementation |
 | `Option+F7` / `gr` | Find Usages / referências |
-| `Ctrl+T` / `Shift+F6` / `Espaço r n` | Rename |
+| `Ctrl+T` | Refactor This (com seleção: Extract Method / Introduce Variable) |
+| `Shift+F6` / `Espaço r n` | Rename |
 | `Alt+Enter` / `Espaço c a` | Ações de código |
 | `F1` / `K` | Documentação |
 | `Cmd+P` | Parameter Info |

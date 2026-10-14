@@ -103,8 +103,9 @@ return {
 
       vim.lsp.config("html", { filetypes = { "html", "blade" } })
 
-      -- Phpactor: só o rename (Shift+F6) de métodos, variáveis, propriedades e classes,
-      -- que no Intelephense é pago. Todo o resto (sugestões, erros, ir para definição)
+      -- Phpactor: o rename (Shift+F6) de métodos, variáveis, propriedades e classes, que no
+      -- Intelephense é pago, e as refatorações do Refactor This (Ctrl+T, config/refactor.lua),
+      -- chamadas como comandos dele. Todo o resto (sugestões, erros, ir para definição)
       -- continua com o Intelephense, sem nada duplicado.
       vim.lsp.config("phpactor", {
         filetypes = { "php" },
@@ -116,6 +117,9 @@ return {
           ["language_server_psalm.enabled"] = false,
           ["language_server_php_cs_fixer.enabled"] = false,
           ["indexer.exclude_patterns"] = { "/node_modules/**/*", "/storage/**/*", "/.git/**/*" },
+          -- getters como no PhpStorm: getTotal() em vez de total()
+          ["code_transform.refactor.generate_accessor.prefix"] = "get",
+          ["code_transform.refactor.generate_accessor.upper_case_first"] = true,
         },
         handlers = {
           ["textDocument/publishDiagnostics"] = function() end,
@@ -139,7 +143,8 @@ return {
             "documentHighlightProvider", "documentSymbolProvider", "workspaceSymbolProvider",
             "codeActionProvider", "codeLensProvider", "documentFormattingProvider",
             "documentRangeFormattingProvider", "inlayHintProvider", "semanticTokensProvider",
-            "selectionRangeProvider", "foldingRangeProvider", "executeCommandProvider",
+            "selectionRangeProvider", "foldingRangeProvider",
+            -- (executeCommandProvider fica: é por ele que o Refactor This chama as refatorações)
           }) do caps[k] = nil end
         end,
       })

@@ -95,7 +95,10 @@ map("n", "<D-F12>", "<cmd>FzfLua lsp_document_symbols<cr>", { desc = "File Struc
 map({ "n", "v" }, "<M-CR>", vim.lsp.buf.code_action, { desc = "Show Intention Actions" })
 map("n", "<S-F6>", vim.lsp.buf.rename, { desc = "Rename" })
 -- Ctrl+T (Refactor This no PhpStorm do Mac): vai direto para o Rename, sem tecla F
-map("n", "<C-t>", vim.lsp.buf.rename, { desc = "Rename" })
+-- Refactor This (Ctrl+T, como no PhpStorm do Mac): Rename, Extract Method, Introduce Variable,
+-- getters/setters… (config/refactor.lua). Com seleção, oferece as extrações.
+map("n", "<C-t>", function() require("config.refactor").open() end, { desc = "Refactor This" })
+map("x", "<C-t>", function() require("config.refactor").open_visual() end, { desc = "Refactor This" })
 map("n", "<F1>", vim.lsp.buf.hover, { desc = "Quick Documentation" })
 map({ "n", "i" }, "<D-p>", vim.lsp.buf.signature_help, { desc = "Parameter Info" })
 map("n", "<F2>", function() vim.diagnostic.jump({ count = 1, float = true }) end, { desc = "Próximo erro" })
