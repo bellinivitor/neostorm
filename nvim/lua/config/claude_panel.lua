@@ -256,6 +256,9 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
 local function with_status(env)
   env = vim.deepcopy(env or {})
   env.NVIM_CLAUDE_STATUS = STATUS_FILE
+  -- Renderer de tela cheia do Claude Code: ocupa o painel todo e deixa o campo de escrita
+  -- sempre embaixo (o clássico escreve a partir do topo e o campo fica logo após o texto)
+  env.CLAUDE_CODE_NO_FLICKER = "1"
   return env
 end
 
