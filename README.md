@@ -115,7 +115,7 @@ cd ~/neostorm && git add -A && git commit -m "descrição" && git push
 | `Option+Backspace` | Apagar palavra |
 | `Cmd+F` / `Cmd+R` | Buscar / Substituir no arquivo |
 | `Cmd+Shift+F` / `Cmd+Shift+R` | Buscar / Substituir no projeto |
-| `Ctrl+Espaço` | Autocomplete (`Cmd+Espaço` também, se tirar o atalho do Spotlight) |
+| `Ctrl+Espaço` | Autocomplete, como no PhpStorm (de novo: mostra/esconde a documentação) |
 | `Cmd+=` / `Cmd+-` / `Cmd+Option+0` | Fonte maior / menor / padrão (Neovide) |
 
 ### Navegação
@@ -256,8 +256,8 @@ install.sh
 
 ## Observações
 
-- **`Cmd+Espaço`** é do Spotlight no macOS. Para usar no autocomplete: Ajustes do Sistema → Teclado → Atalhos de
-  Teclado → Spotlight, e troque ou desligue "Mostrar busca do Spotlight". `Ctrl+Espaço` funciona sempre.
+- **`Ctrl+Espaço`** (autocomplete) precisa estar livre no macOS: em Ajustes do Sistema → Teclado → Atalhos de
+  Teclado → Fontes de Entrada, deixe desligado "Selecionar a fonte de entrada anterior".
 - **Tinker** usa o banco do `.env` do projeto; código que parece alterar dados pede confirmação, mas confira antes.
 - **Testes:** rodam a suíte de verdade do projeto (com o banco de teste configurado nele).
 - **Problems** mostra o que os servidores de linguagem encontram, e eles só analisam arquivos abertos; use `a` para

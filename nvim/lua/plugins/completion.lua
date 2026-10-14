@@ -9,9 +9,8 @@ return {
       preset = "enter",
       ["<Tab>"] = { "accept", "snippet_forward", "fallback" },
       ["<S-Tab>"] = { "snippet_backward", "fallback" },
-      -- Cmd+Espaço abre o autocomplete (o Ghostty manda como <D-Space>; o Ctrl+Espaço do
-      -- preset também funciona). No macOS o Cmd+Espaço é do Spotlight até você trocar lá.
-      ["<D-Space>"] = { "show", "show_documentation", "hide_documentation" },
+      -- Ctrl+Espaço abre o autocomplete, como no PhpStorm do Mac (de novo: mostra/esconde a documentação)
+      ["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },
     },
     appearance = { nerd_font_variant = "mono" },
     completion = {

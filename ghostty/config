@@ -46,8 +46,6 @@ keybind = cmd+x=csi:120;9u
 keybind = cmd+/=csi:47;9u
 keybind = cmd+d=csi:100;9u
 keybind = cmd+backspace=csi:127;9u
-# Autocomplete (só chega aqui se o Spotlight não estiver usando Cmd+Espaço)
-keybind = cmd+space=csi:32;9u
 keybind = cmd+shift+arrow_up=csi:1;10A
 keybind = cmd+shift+arrow_down=csi:1;10B
 
