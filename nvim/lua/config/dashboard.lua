@@ -47,6 +47,7 @@ function M.config()
         { icon = I.search, key = "s", desc = "Search Everywhere", action = ":FzfLua global" },
         { icon = I.file, key = "f", desc = "Abrir arquivo", action = ":FzfLua files" },
         { icon = I.recent, key = "r", desc = "Arquivos recentes", action = ":FzfLua oldfiles cwd_only=true" },
+        { icon = I.recent, key = "v", desc = "Restaurar sessão", action = function() require("persistence").load() end },
         { icon = I.grep, key = "g", desc = "Buscar no projeto", action = ":FzfLua live_grep" },
         { icon = I.commit, key = "c", desc = "Commit", action = function() require("config.commit").open() end },
         { icon = I.term, key = "t", desc = "Terminal", action = function() require("config.terminal").toggle() end },

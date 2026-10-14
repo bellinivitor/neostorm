@@ -163,7 +163,7 @@ return {
     },
   },
 
-  -- Reabre os arquivos do projeto onde você parou
+  -- Sessão do projeto (por branch): "Restaurar sessão" no dashboard reabre os arquivos onde você parou
   {
     "folke/persistence.nvim",
     lazy = false,
@@ -195,10 +195,14 @@ return {
       vim.api.nvim_create_autocmd("VimEnter", {
         nested = true,
         callback = function()
-          if vim.fn.argc() == 0 and not vim.g.started_with_stdin then
-            persistence.load()
-            vim.schedule(function() vim.cmd("Neotree show") end)
+          -- Abre no dashboard (a sessão volta pelo item "Restaurar sessão" dele).
+          -- Só grava sessão quando o nvim abre sem arquivo (nvim na pasta do projeto): abrir um
+          -- arquivo específico não sobrescreve a sessão do projeto. NEOSTORM_NO_SESSION=1 também desliga.
+          if vim.fn.argc() > 0 or vim.g.started_with_stdin or vim.env.NEOSTORM_NO_SESSION then
+            persistence.stop()
+            return
           end
+          vim.schedule(function() vim.cmd("Neotree show") end)
         end,
       })
     end,

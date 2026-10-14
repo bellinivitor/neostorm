@@ -37,6 +37,9 @@ cd ~/neostorm && git add -A && git commit -m "descrição" && git push
 ## Recursos
 
 ### Interface
+- **Abre no dashboard** (com a árvore do projeto): arquivos recentes do projeto e atalhos. **Restaurar sessão** (`v`)
+  reabre os arquivos onde você parou (sessão por projeto e por branch). A sessão só é gravada quando o nvim abre sem
+  arquivo (`nvim` na pasta do projeto); `nvim arquivo.php` não mexe nela.
 - **Abas de arquivo em cards** arredondados; ● marca arquivo não salvo; o título "Projeto" fica alinhado à árvore.
 - **Barra de ferramentas** na direita: Projeto, Commit, Structure em cima; Problems, Run, Terminal, Claude e Git embaixo.
   Projeto, Commit e Structure dividem o mesmo espaço (um de cada vez); Terminal, Run e Problems dividem o de baixo.
