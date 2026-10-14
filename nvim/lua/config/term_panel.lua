@@ -167,6 +167,17 @@ return function(cfg)
     -- Ctrl+k volta para o código sem fechar o painel
     map("<C-k>", "<cmd>wincmd p<cr>", "Ir para o editor")
     vim.keymap.set("n", "<D-w>", function() M.close() end, { buffer = buf, desc = "Fechar aba" })
+    -- Clique simples no terminal volta a digitar. Programas que não usam o mouse (como o Claude
+    -- Code) fazem o Neovim sair do modo de digitação a cada clique; sem isso, clicar no painel
+    -- deixava o foco nele, mas sem conseguir escrever. (Arrastar para selecionar e copiar
+    -- continua: aí fica em modo visual e este atalho não roda.)
+    vim.keymap.set("n", "<LeftRelease>", function()
+      local pos = vim.fn.getmousepos()
+      if pos.winid ~= 0 and vim.api.nvim_win_get_buf(pos.winid) == buf and M.running() then
+        vim.api.nvim_set_current_win(pos.winid)
+        vim.cmd.startinsert()
+      end
+    end, { buffer = buf, desc = "Clique: voltar a digitar" })
     if not is_claude then
       -- Esc duas vezes: sai do modo de digitação (para rolar e copiar a saída)
       -- (no Claude Code, Esc e Esc Esc são do próprio Claude)

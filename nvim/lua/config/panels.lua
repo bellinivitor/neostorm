@@ -80,7 +80,7 @@ vim.api.nvim_create_autocmd("BufWinEnter", {
   end,
 })
 
--- Listas laterais (Projeto, Structure, Commit) não rolam além do último item:
+-- Listas laterais (Projeto, Structure, Commit) e painéis de terminal não rolam além do último item:
 -- o fim da lista para no pé da janela, em vez de subir até sobrar só tela vazia
 local NO_OVERSCROLL = { ["neo-tree"] = true, aerial = true, commit_list = true }
 
@@ -91,7 +91,8 @@ vim.api.nvim_create_autocmd("WinScrolled", {
       local win = tonumber(id)
       if win and vim.api.nvim_win_is_valid(win) then
         local buf = vim.api.nvim_win_get_buf(win)
-        if NO_OVERSCROLL[vim.bo[buf].filetype] then
+        -- (também os painéis de terminal: Claude, Terminal, Run)
+        if NO_OVERSCROLL[vim.bo[buf].filetype] or vim.b[buf].term_tab then
           vim.api.nvim_win_call(win, function()
             local max_top = math.max(1, vim.api.nvim_buf_line_count(buf) - vim.api.nvim_win_get_height(win) + 1)
             local view = vim.fn.winsaveview()
