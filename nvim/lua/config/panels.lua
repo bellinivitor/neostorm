@@ -80,9 +80,10 @@ vim.api.nvim_create_autocmd("BufWinEnter", {
   end,
 })
 
--- Listas laterais (Projeto, Structure, Commit) e painéis de terminal não rolam além do último item:
--- o fim da lista para no pé da janela, em vez de subir até sobrar só tela vazia
-local NO_OVERSCROLL = { ["neo-tree"] = true, aerial = true, commit_list = true }
+-- Listas laterais (Projeto, Structure, Commit), a tela inicial e painéis de terminal não rolam
+-- além do último item: o fim da lista para no pé da janela, em vez de subir até sobrar só tela
+-- vazia. Se tudo cabe na janela (a tela inicial, quase sempre), não rola nada.
+local NO_OVERSCROLL = { ["neo-tree"] = true, aerial = true, commit_list = true, snacks_dashboard = true }
 
 vim.api.nvim_create_autocmd("WinScrolled", {
   group = vim.api.nvim_create_augroup("panels_no_overscroll", { clear = true }),
