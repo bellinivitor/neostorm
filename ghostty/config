@@ -1,0 +1,105 @@
+# Ghostty dedicado ao Neovim (o dia a dia fica no Warp)
+# Após editar: Cmd+Shift+, recarrega a config
+
+# Aparência (mesmas cores do tema "phpstorm" do Neovim)
+font-size = 14
+# Mais espaço entre as linhas, como no editor do PhpStorm
+adjust-cell-height = 20%
+background = 1c1d1f
+foreground = b4b6bc
+cursor-color = cdd0d6
+selection-background = 214283
+selection-foreground = ffffff
+window-padding-x = 10
+window-padding-y = 6
+window-padding-balance = true
+macos-titlebar-style = tabs
+window-save-state = always
+mouse-hide-while-typing = true
+copy-on-select = clipboard
+confirm-close-surface = false
+
+# Ícone do Dock (variantes oficiais: blueprint, chalkboard, microchip, glass, holographic, paper, retro, xray)
+macos-icon = retro
+
+# Option esquerdo funciona como Alt (Alt+Enter, Alt+F7, Alt+F12, Alt+t)
+# O direito continua digitando acentos e símbolos
+macos-option-as-alt = left
+
+# Option+seta pula palavra e Option+Backspace apaga palavra, no shell e no Neovim
+keybind = alt+arrow_left=esc:b
+keybind = alt+arrow_right=esc:f
+# (Option+Backspace já chega como Alt+Backspace por causa do macos-option-as-alt)
+
+# Atalhos com Cmd no estilo PhpStorm
+# Cada Cmd+tecla manda uma sequência que o Neovim recebe como <D-tecla>
+# Formato: tecla;modificadores  (9 = Cmd, 10 = Cmd+Shift, 11 = Cmd+Alt, 15 = Ctrl+Alt+Cmd)
+# Cmd+V fica com o Ghostty (colar funciona em qualquer modo do Neovim)
+
+# Edição
+keybind = cmd+s=csi:115;9u
+keybind = cmd+z=csi:122;9u
+keybind = cmd+shift+z=csi:122;10u
+keybind = cmd+a=csi:97;9u
+keybind = cmd+c=csi:99;9u
+keybind = cmd+x=csi:120;9u
+keybind = cmd+/=csi:47;9u
+keybind = cmd+d=csi:100;9u
+keybind = cmd+backspace=csi:127;9u
+# Autocomplete (só chega aqui se o Spotlight não estiver usando Cmd+Espaço)
+keybind = cmd+space=csi:32;9u
+keybind = cmd+shift+arrow_up=csi:1;10A
+keybind = cmd+shift+arrow_down=csi:1;10B
+
+# Busca e navegação
+keybind = cmd+f=csi:102;9u
+keybind = cmd+r=csi:114;9u
+keybind = cmd+shift+f=csi:102;10u
+keybind = cmd+shift+r=csi:114;10u
+# Run Anything (rodar comando ou script do projeto)
+keybind = cmd+shift+x=csi:120;10u
+keybind = cmd+o=csi:111;9u
+keybind = cmd+shift+o=csi:111;10u
+keybind = cmd+e=csi:101;9u
+keybind = cmd+shift+e=csi:101;10u
+keybind = cmd+shift+a=csi:97;10u
+keybind = cmd+l=csi:108;9u
+keybind = cmd+[=csi:91;9u
+keybind = cmd+]=csi:93;9u
+keybind = cmd+shift+[=csi:91;10u
+keybind = cmd+shift+]=csi:93;10u
+
+# Código
+keybind = cmd+b=csi:98;9u
+keybind = cmd+alt+b=csi:98;11u
+keybind = cmd+f12=csi:24;9~
+keybind = cmd+p=csi:112;9u
+keybind = cmd+alt+l=csi:108;11u
+# Endpoints (rotas do Laravel)
+keybind = cmd+alt+r=csi:114;11u
+# Exemplo de requisição da rota
+keybind = cmd+alt+e=csi:101;11u
+# Tinker na seleção
+keybind = cmd+alt+t=csi:116;11u
+keybind = cmd+n=csi:110;9u
+keybind = cmd+alt+z=csi:122;11u
+
+# Terminal com abas e Claude Code (dentro do Neovim)
+keybind = cmd+t=csi:116;9u
+keybind = cmd+escape=csi:27;9u
+
+# Commit: Cmd+Enter faz o commit, Cmd+Shift+Enter commit e push, Cmd+Shift+K push
+keybind = cmd+enter=csi:13;9u
+keybind = cmd+shift+enter=csi:13;10u
+keybind = cmd+shift+k=csi:107;10u
+# Nova branch (Option+Cmd+N, como no PhpStorm)
+keybind = cmd+alt+n=csi:110;11u
+
+# Painéis
+keybind = cmd+1=csi:49;9u
+keybind = cmd+0=csi:48;9u
+keybind = cmd+6=csi:54;9u
+keybind = cmd+7=csi:55;9u
+keybind = cmd+9=csi:57;9u
+keybind = cmd+k=csi:107;9u
+keybind = cmd+w=csi:119;9u

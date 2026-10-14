@@ -1,0 +1,6 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "~/.config/nvim/scripts/claude-statusline.sh"
+  }
+}
