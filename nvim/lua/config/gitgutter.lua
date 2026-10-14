@@ -55,6 +55,10 @@ function M.statuscolumn()
     num = tostring(lnum)
   end
   local num_hl = vim.v.relnum == 0 and "%#CursorLineNr#" or "%#LineNr#"
+  -- cobertura dos testes (config/tests.lua): número verde se a linha rodou, vermelho se não
+  local tests = package.loaded["config.tests"]
+  local cov = tests and next(tests.coverage) and vim.v.virtnum == 0 and tests.coverage_hl(buf, lnum)
+  if cov then num_hl = "%#" .. cov .. "#" end
 
   return diag .. "%=" .. num_hl .. num .. "%* " .. "%@v:lua.GitGutterClick@" .. git .. "%T "
 end

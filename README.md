@@ -77,6 +77,11 @@ cd ~/neostorm && git add -A && git commit -m "descrição" && git push
   confirmação para código que altera dados (`save`, `update`, `delete`, `create`, `DB::statement`…).
 - **Testes Pest:** ▶ na margem de cada `test()`/`it()` (e ⏵⏵ na 1ª linha para o arquivo); clique roda no painel Run;
   no fim mostra ✓/✗ e a mensagem de falha como erro na linha.
+- **Resultados dos testes** numa árvore à esquerda da saída do Run: arquivos com falha primeiro, tempo de cada
+  teste e a mensagem da falha. Enter no teste abre a linha dele; na falha, vai para onde quebrou. `f` roda de novo
+  só os que falharam.
+- **Cobertura** (`Espaço t c`): roda com cobertura e pinta os números das linhas (verde rodou, vermelho não rodou),
+  com a porcentagem total. Precisa de Xdebug (ative no Herd) ou PCOV no PHP do projeto. `Espaço t C` esconde.
 
 ### Navegação
 - **Search Everywhere**, Go to File, Go to Class/Symbol, Find in Files, arquivos recentes (fzf-lua).
@@ -175,6 +180,7 @@ cd ~/neostorm && git add -A && git commit -m "descrição" && git push
 | `Cmd+N` / `Espaço l m` | Laravel make |
 | `Espaço l a` / `l c` / `l o` / `l l` / `l p` | Artisan / commands / resources / picker geral / command center |
 | `Espaço t n` / `t f` / `t s` / `t l` | Teste sob o cursor / do arquivo / suíte / repetir o último |
+| `Espaço t c` / `t C` | Rodar com cobertura / esconder a cobertura |
 
 ### Git
 | Atalho | O quê |

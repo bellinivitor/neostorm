@@ -131,6 +131,8 @@ map("n", "<leader>tn", tests("nearest"), { desc = "Teste sob o cursor" })
 map("n", "<leader>tf", tests("file"), { desc = "Testes do arquivo" })
 map("n", "<leader>ts", tests("suite"), { desc = "Suíte inteira" })
 map("n", "<leader>tl", tests("again"), { desc = "Repetir o último teste" })
+map("n", "<leader>tc", tests("with_coverage"), { desc = "Rodar com cobertura" })
+map("n", "<leader>tC", tests("coverage_clear"), { desc = "Esconder a cobertura" })
 
 -- Conflitos de merge/rebase: lista dos arquivos, continuar e abortar (config/conflicts.lua)
 map("n", "<leader>gx", function() require("config.conflicts").open() end, { desc = "Conflitos" })

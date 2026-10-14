@@ -1,6 +1,9 @@
 -- Testes como no PhpStorm (Pest): ▶ na margem ao lado de cada test()/it() e na 1ª linha
 -- (arquivo inteiro). Clicar roda no painel Run, com o PHP do projeto; no fim a margem
 -- troca o ▶ por ✓ ou ✗ e a mensagem de falha aparece como erro na linha do teste.
+-- Os resultados aparecem numa árvore à esquerda da saída do Run (config/test_results.lua).
+-- Cobertura: <leader>tc roda com cobertura e pinta os números das linhas (verde = rodou,
+-- vermelho = não rodou); <leader>tC esconde. Precisa de Xdebug ou PCOV no PHP do projeto.
 --   <leader>tn teste sob o cursor · <leader>tf arquivo · <leader>tl repete · <leader>ts suíte
 local M = {}
 
@@ -134,17 +137,61 @@ local function filter_regex(name)
 end
 
 --- Comando para rodar (separado para poder trocar nos testes desta configuração)
-function M.command(root, target, filter, xml)
+function M.command(root, target, filter, xml, clover)
   local parts = { "php", "vendor/bin/pest", vim.fn.shellescape(target), "--colors=always", "--log-junit", vim.fn.shellescape(xml) }
   if filter then vim.list_extend(parts, { "--filter", vim.fn.shellescape(filter) }) end
+  if clover then vim.list_extend(parts, { "--coverage-clover", vim.fn.shellescape(clover) }) end
   return table.concat(parts, " ")
 end
 
+-- ---------------------------------------------------------------------------
+-- Cobertura (relatório Clover) → cor no número da linha
+-- ---------------------------------------------------------------------------
+M.coverage = {} -- [caminho] = { [linha] = vezes que rodou }
+
+local function parse_clover(path)
+  local f = io.open(path, "r")
+  if not f then return nil end
+  local xml = f:read("*a")
+  f:close()
+  local cov, total, covered = {}, 0, 0
+  for name, body in xml:gmatch('<file name="(.-)"[^>]*>(.-)</file>') do
+    local lines = {}
+    for attrs in body:gmatch("<line%s([^>]-)/>") do
+      local num, kind, count = attrs:match('num="(%d+)"'), attrs:match('type="(%a+)"'), attrs:match('count="(%d+)"')
+      if num and count and kind == "stmt" then
+        lines[tonumber(num)] = tonumber(count)
+        total = total + 1
+        if tonumber(count) > 0 then covered = covered + 1 end
+      end
+    end
+    cov[name] = lines
+  end
+  return cov, total, covered
+end
+M.parse_clover = parse_clover
+
+--- grupo de cor do número da linha (nil quando não há cobertura para ela)
+function M.coverage_hl(buf, lnum)
+  local file = M.coverage[vim.api.nvim_buf_get_name(buf)]
+  local n = file and file[lnum]
+  if n == nil then return nil end
+  return n > 0 and "CoverageHit" or "CoverageMiss"
+end
+
+function M.coverage_clear()
+  M.coverage = {}
+  vim.cmd("redraw!")
+  vim.notify("Cobertura escondida", vim.log.levels.INFO, { title = "Testes" })
+end
+
 --- target: arquivo ou pasta; test: { name } ou nil (todos do alvo)
-function M.run(target, test)
+--- opts: { filter = regex do --filter, title, coverage = true }
+function M.run(target, test, opts)
+  opts = opts or {}
   local root = project_root(target)
   if not root then return vim.notify("Não achei o projeto deste teste", vim.log.levels.WARN, { title = "Testes" }) end
-  M.last = { target = target, test = test }
+  M.last = { target = target, test = test, opts = opts }
   local rel = target:sub(#root + 2)
   local is_file = target:match("%.php$") ~= nil
   local tests = {}
@@ -158,14 +205,33 @@ function M.run(target, test)
     if buf > 0 then M.refresh(buf) end
   end
   local xml = vim.fn.stdpath("cache") .. "/pest-" .. vim.fn.getpid() .. ".xml"
-  local cmd = "rm -f " .. vim.fn.shellescape(xml) .. "; " .. M.command(root, rel, test and filter_regex(test.name), xml)
-  local title = test and ("Pest: " .. test.name) or ("Pest: " .. (rel ~= "" and rel or "suíte"))
+  local clover = opts.coverage and (vim.fn.stdpath("cache") .. "/pest-" .. vim.fn.getpid() .. "-clover.xml") or nil
+  local filter = opts.filter or (test and filter_regex(test.name))
+  local cmd = "rm -f " .. vim.fn.shellescape(xml) .. (clover and (" " .. vim.fn.shellescape(clover)) or "") .. "; "
+    .. M.command(root, rel, filter, xml, clover)
+  local title = opts.title or (test and ("Pest: " .. test.name) or ("Pest: " .. (rel ~= "" and rel or "suíte")))
+  if clover then title = title .. " (cobertura)" end
   local run = require("config.run_panel")
   local i = run.find(title)
   if i then run.close(i) end
   run.new({
     name = title, cwd = root, cmd = { vim.o.shell, "-c", cmd }, focus = false,
+    -- Xdebug só mede cobertura com o modo coverage ligado (o PCOV não precisa)
+    env = clover and { XDEBUG_MODE = "coverage" } or nil,
     on_exit = function()
+      require("config.test_results").show(xml, root)
+      if clover then
+        local cov, total, covered = parse_clover(clover)
+        if not cov then
+          vim.notify("Sem relatório de cobertura: o PHP do projeto precisa de Xdebug ou PCOV.\n"
+            .. "No Herd, ative o Xdebug; ou instale o PCOV (pecl install pcov).", vim.log.levels.WARN, { title = "Cobertura" })
+        else
+          M.coverage = cov
+          vim.cmd("redraw!")
+          local pct = total > 0 and math.floor(covered * 100 / total + 0.5) or 0
+          vim.notify(pct .. "% das linhas cobertas (" .. covered .. " de " .. total .. "). <leader>tC esconde.", vim.log.levels.INFO, { title = "Cobertura" })
+        end
+      end
       if not is_file then
         -- suíte/pasta: atualiza os arquivos abertos
         for _, b in ipairs(vim.api.nvim_list_bufs()) do
@@ -177,6 +243,26 @@ function M.run(target, test)
       vim.notify(fails > 0 and (fails .. " teste(s) falharam") or "Testes passaram", fails > 0 and vim.log.levels.WARN or vim.log.levels.INFO, { title = title })
     end,
   })
+  require("config.test_results").start()
+end
+
+--- roda de novo só os testes que falharam (da árvore de resultados)
+function M.run_failed(names)
+  if not M.last then return end
+  local parts = {}
+  for _, n in ipairs(names) do table.insert(parts, filter_regex(n)) end
+  local root = project_root(M.last.target)
+  M.run(M.last.test and M.last.target or (root and (root .. "/tests")) or M.last.target, nil,
+    { filter = "(" .. table.concat(parts, "|") .. ")", title = "Pest: falhos" })
+end
+
+--- Run with Coverage: o arquivo de teste aberto, ou a suíte inteira
+function M.with_coverage()
+  local buf = vim.api.nvim_get_current_buf()
+  if is_test_file(buf) then return M.run(vim.api.nvim_buf_get_name(buf), nil, { coverage = true }) end
+  local name = vim.api.nvim_buf_get_name(buf)
+  local root = project_root(name ~= "" and name or vim.fn.getcwd()) or vim.fn.getcwd()
+  M.run(root .. "/tests", nil, { coverage = true })
 end
 
 local function current_test(buf)
@@ -206,7 +292,7 @@ end
 
 function M.again()
   if not M.last then return vim.notify("Nenhum teste rodou ainda", vim.log.levels.INFO, { title = "Testes" }) end
-  M.run(M.last.target, M.last.test)
+  M.run(M.last.target, M.last.test, M.last.opts)
 end
 
 -- Clique no ▶ da margem (chamado pela coluna da esquerda, config/gitgutter.lua)
@@ -237,6 +323,8 @@ local function colors()
   set(0, "TestOk", { fg = c.hint })
   set(0, "TestFail", { fg = c.error })
   set(0, "TestRunning", { fg = c.accent })
+  set(0, "CoverageHit", { fg = c.hint })
+  set(0, "CoverageMiss", { fg = c.error })
 end
 colors()
 vim.api.nvim_create_autocmd("ColorScheme", { callback = colors })
