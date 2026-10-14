@@ -524,13 +524,14 @@ local function ensure_buffers()
       local meta = line_meta()
       if not (meta and meta.kind == "file") then return end
       local p = abs(meta.item)
-      for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-        local b = vim.api.nvim_win_get_buf(w)
-        if vim.api.nvim_win_get_config(w).relative == "" and vim.bo[b].buftype == "" then
-          vim.api.nvim_set_current_win(w)
-          return vim.cmd("edit " .. vim.fn.fnameescape(p))
-        end
+      -- janela de código (o dashboard conta); se não houver nenhuma, abre uma à esquerda do painel
+      local main = require("config.panels").main_win()
+      if main then
+        vim.api.nvim_set_current_win(main)
+      else
+        vim.api.nvim_open_win(0, true, { split = "left", win = M.win.list })
       end
+      vim.cmd("edit " .. vim.fn.fnameescape(p))
     end
     map("<F4>", open_file, "Abrir arquivo")
     map("o", open_file, "Abrir arquivo")
@@ -559,7 +560,8 @@ local function ensure_buffers()
     map("<2-LeftMouse>", function()
       local pos = vim.fn.getmousepos()
       local meta = M.lines[pos.line]
-      if meta and meta.kind == "file" then M.diff_line(pos.line) end
+      -- (abre depois que o duplo clique termina; senão o diff entrava em modo visual)
+      if meta and meta.kind == "file" then require("config.panels").after_click(M.diff_line)(pos.line) end
     end)
   end
   if not (M.msg_buf and vim.api.nvim_buf_is_valid(M.msg_buf)) then

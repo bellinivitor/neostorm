@@ -511,7 +511,7 @@ function M.open()
     if st.filter then st.filter, st.commit_shown = nil, nil; render_log(); render_commit(selected_commit()) end
   end)
   map(st.buf.files, "<CR>", open_file)
-  map(st.buf.files, "<2-LeftMouse>", open_file)
+  map(st.buf.files, "<2-LeftMouse>", require("config.panels").after_click(open_file))
 
   vim.api.nvim_create_autocmd("CursorMoved", {
     buffer = st.buf.log,

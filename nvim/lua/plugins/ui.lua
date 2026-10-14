@@ -257,6 +257,9 @@ return {
     "folke/which-key.nvim",
     event = "VeryLazy",
     opts = {
+      -- Sem o painel automático no modo visual: qualquer seleção (até a de um duplo clique)
+      -- abria o "+Visual" por cima da tela. Continua no normal (Espaço…), select e operador.
+      triggers = { { "<auto>", mode = "nso" } },
       spec = {
         { "<leader>b", group = "abas" },
         { "<leader>c", group = "código" },

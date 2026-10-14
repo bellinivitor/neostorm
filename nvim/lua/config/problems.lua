@@ -171,7 +171,7 @@ function M.open()
     vim.bo[st.buf].filetype = "problems"
     local function map(lhs, fn) vim.keymap.set("n", lhs, fn, { buffer = st.buf, nowait = true }) end
     map("<CR>", function() activate() end)
-    map("<2-LeftMouse>", function() activate() end)
+    map("<2-LeftMouse>", require("config.panels").after_click(function() activate() end))
     map("a", M.analyze_changed)
     map("q", M.close)
     map("<D-w>", M.close)

@@ -324,7 +324,7 @@ function M.open(root, other, cur)
     if f then file_diff(view, f) end
   end
   vim.keymap.set("n", "<CR>", open_file, { buffer = dbuf, nowait = true })
-  vim.keymap.set("n", "<2-LeftMouse>", open_file, { buffer = dbuf, nowait = true })
+  vim.keymap.set("n", "<2-LeftMouse>", require("config.panels").after_click(open_file), { buffer = dbuf, nowait = true })
 
   vim.api.nvim_create_autocmd("WinResized", {
     callback = function()

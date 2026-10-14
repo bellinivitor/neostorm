@@ -107,4 +107,22 @@ vim.api.nvim_create_autocmd("WinScrolled", {
   end,
 })
 
+
+--- Para atalhos de duplo clique: roda fn só depois que a sequência do clique terminar.
+--- Abrir uma tela no meio do duplo clique fazia o resto dos eventos cair nela como
+--- "selecionar palavra" (modo visual, e o which-key aparecia junto).
+function M.after_click(fn)
+  return function(...)
+    local args = { ... }
+    vim.defer_fn(function()
+      local mode = vim.fn.mode()
+      if mode:match("[vV\22]") then vim.cmd("normal! \27") end
+      fn(unpack(args))
+      vim.defer_fn(function()
+        if vim.fn.mode():match("[vV\22]") then vim.cmd("normal! \27") end
+      end, 30)
+    end, 60)
+  end
+end
+
 return M
