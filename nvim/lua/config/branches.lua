@@ -72,7 +72,9 @@ end
 -- Ações
 -- ---------------------------------------------------------------------------
 local function close()
-  for _, w in ipairs({ st.sub_win, st.input_win, st.list_win }) do
+  -- (por chave, não ipairs: sem submenu o sub_win é nil e o ipairs parava antes de fechar as outras)
+  for _, key in ipairs({ "sub_win", "input_win", "list_win" }) do
+    local w = st[key]
     if w and vim.api.nvim_win_is_valid(w) then pcall(vim.api.nvim_win_close, w, true) end
   end
   vim.cmd.stopinsert()
@@ -661,7 +663,7 @@ function M.open()
   st = { root = r, collapsed = {}, prev_win = vim.api.nvim_get_current_win() }
   st.data = load()
   st.width = math.min(64, vim.o.columns - 6)
-  st.max_height = math.max(8, math.floor(vim.o.lines * 0.6))
+  st.max_height = math.max(8, math.floor(vim.o.lines * 0.5)) -- no máximo metade da tela
 
   -- lista primeiro (embaixo), campo de busca em cima dela
   local col = vim.o.columns - st.width - 2
@@ -732,7 +734,11 @@ function M.open()
   -- mouse na lista: clique escolhe; clique na seta › ou botão direito abre as ações
   local lbuf = st.list_buf
   -- (o popup abre no modo de digitação por causa da busca; o clique precisa valer nos dois modos)
-  vim.keymap.set({ "n", "i" }, "<LeftRelease>", function()
+  -- (arrastar não vira seleção; se a lista estiver em modo visual, o clique e Esc/q valem igual)
+  vim.keymap.set({ "n", "x", "i" }, "<LeftDrag>", "<Nop>", { buffer = lbuf })
+  for _, k in ipairs({ "<Esc>", "q" }) do vim.keymap.set("x", k, close, { buffer = lbuf }) end
+  local function list_click()
+    if vim.fn.mode():match("[vV\22]") then vim.cmd("normal! \27") end
     local pos = vim.fn.getmousepos()
     if pos.winid ~= st.list_win then return end
     local it = st.items[pos.line]
@@ -740,7 +746,27 @@ function M.open()
     st.sel = pos.line
     if it and it.kind == "branch" and on_arrow then return activate(pos.line, true) end
     activate(pos.line)
-  end, { buffer = lbuf })
+  end
+  vim.keymap.set({ "n", "i", "x" }, "<LeftRelease>", list_click, { buffer = lbuf })
+  -- o clique também é tratado pelo campo de busca: a lista nunca fica com o foco (abaixo)
+  vim.keymap.set({ "n", "i", "x" }, "<LeftRelease>", list_click, { buffer = ibuf })
+  vim.keymap.set({ "n", "x", "i" }, "<LeftDrag>", "<Nop>", { buffer = ibuf })
+  -- A lista nunca fica com o foco (como no PhpStorm): se cair nela (clique, arrasto, Ctrl-w),
+  -- volta para a busca no modo de digitação. Sem isso, um arrasto deixava a lista em modo
+  -- visual e o popup parecia travado.
+  vim.api.nvim_create_autocmd("WinEnter", {
+    buffer = lbuf,
+    callback = function()
+      vim.schedule(function()
+        if st.list_win and vim.api.nvim_get_current_win() == st.list_win and st.input_win
+          and vim.api.nvim_win_is_valid(st.input_win) then
+          if vim.fn.mode():match("[vV\22]") then vim.cmd("normal! \27") end
+          vim.api.nvim_set_current_win(st.input_win)
+          vim.cmd.startinsert({ bang = true })
+        end
+      end)
+    end,
+  })
   vim.keymap.set({ "n", "i" }, "<RightMouse>", function()
     local pos = vim.fn.getmousepos()
     if pos.winid == st.list_win then activate(pos.line, true) end

@@ -552,7 +552,11 @@ function M.open(opts)
     vim.schedule(function() require("config.route_example").show(rt, r) end)
   end)
   vim.keymap.set("n", "q", close, { buffer = ibuf })
-  vim.keymap.set({ "n", "i" }, "<LeftRelease>", function()
+  -- (arrastar não vira seleção; se a lista estiver em modo visual, o clique e Esc/q valem igual)
+  vim.keymap.set({ "n", "x", "i" }, "<LeftDrag>", "<Nop>", { buffer = st.list_buf })
+  for _, k in ipairs({ "<Esc>", "q" }) do vim.keymap.set("x", k, close, { buffer = st.list_buf }) end
+  vim.keymap.set({ "n", "i", "x" }, "<LeftRelease>", function()
+    if vim.fn.mode():match("[vV\22]") then vim.cmd("normal! \27") end
     local p = vim.fn.getmousepos()
     if p.winid == st.list_win then activate(p.line) end
   end, { buffer = st.list_buf })
