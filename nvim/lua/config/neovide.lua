@@ -1,7 +1,9 @@
 -- Ajustes que só valem quando o Neovim roda dentro do Neovide
 if not vim.g.neovide then return end
 
-vim.o.guifont = "JetBrainsMono Nerd Font:h14"
+-- Monaspace Argon (github.com/githubnext/monaspace, brew install --cask font-monaspace).
+-- Ela não tem os ícones da Nerd Font: a JetBrains Mono Nerd Font fica de reserva para eles.
+vim.o.guifont = "Monaspace Argon,JetBrainsMono Nerd Font:h14"
 vim.opt.linespace = 4
 
 -- Option esquerdo vira Alt (para Alt+Enter, Alt+F7...). O direito continua digitando acentos e símbolos
