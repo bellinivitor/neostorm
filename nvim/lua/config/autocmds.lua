@@ -94,3 +94,61 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter" }, {
   group = group,
   command = "silent! checktime",
 })
+
+-- Coluna de código nova divide o espaço igualmente com as colunas de código vizinhas.
+-- Painéis (Projeto, Claude, Terminal, barra lateral) mantêm a largura que já tinham.
+local function is_code_win(w)
+  if not vim.api.nvim_win_is_valid(w) or vim.api.nvim_win_get_config(w).relative ~= "" then return false end
+  if require("config.panels").is_panel(w) then return false end
+  local b = vim.api.nvim_win_get_buf(w)
+  local ft = vim.bo[b].filetype
+  return vim.bo[b].buftype == "" and ft ~= "neo-tree" and ft ~= "aerial" and ft ~= "activity_bar"
+end
+
+-- a "linha" do layout (colunas lado a lado) em que a janela está
+local function row_of(win)
+  local function find(node, parent)
+    if node[1] == "leaf" then return node[2] == win and parent or nil end
+    for _, child in ipairs(node[2]) do
+      local r = find(child, node)
+      if r then return r end
+    end
+  end
+  local row = find(vim.fn.winlayout(), nil)
+  return row and row[1] == "row" and row or nil
+end
+
+local function equalize_columns(win)
+  local row = row_of(win)
+  if not row then return end
+  local cols = {}
+  for _, child in ipairs(row[2]) do
+    if child[1] == "leaf" and is_code_win(child[2]) then table.insert(cols, child[2]) end
+  end
+  if #cols < 2 then return end
+  local total = 0
+  for _, w in ipairs(cols) do total = total + vim.api.nvim_win_get_width(w) end
+  local each = math.floor(total / #cols)
+  for i = 1, #cols - 1 do pcall(vim.api.nvim_win_set_width, cols[i], each) end
+end
+
+local known = {}
+vim.api.nvim_create_autocmd("WinNew", {
+  group = group,
+  callback = function()
+    -- espera a janela ficar pronta (buffer e marca de painel) antes de decidir
+    vim.schedule(function()
+      local new = {}
+      for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        if not known[w] then table.insert(new, w); known[w] = true end
+      end
+      for _, w in ipairs(new) do
+        if is_code_win(w) then return equalize_columns(w) end
+      end
+    end)
+  end,
+})
+vim.api.nvim_create_autocmd("WinClosed", {
+  group = group,
+  callback = function(ev) known[tonumber(ev.match)] = nil end,
+})
