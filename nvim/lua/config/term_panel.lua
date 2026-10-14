@@ -76,7 +76,11 @@ return function(cfg)
   _G[G .. "TabRerun"] = function() vim.schedule(function() M.rerun() end) end
   _G[G .. "TabStop"] = function() vim.schedule(function() M.stop() end) end
 
-  local function redraw() if valid_win() then vim.cmd("redrawstatus!") end end
+  local function redraw()
+    if valid_win() then vim.cmd("redrawstatus!") end
+    -- a barra lateral mostra se algo está rodando (ícone verde no Run), mesmo com o painel fechado
+    pcall(function() require("config.activity_bar").render() end)
+  end
   M.redraw = redraw
 
   -- -------------------------------------------------------------------------

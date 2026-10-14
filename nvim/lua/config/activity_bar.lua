@@ -70,6 +70,13 @@ M.items = {
   {
     icon = "\u{EB2C}", name = "Run", key = "",
     active = function() return require("config.run_panel").is_open() end,
+    -- ícone verde enquanto algum comando do Run está rodando (mesmo com o painel fechado)
+    badge = function()
+      local run = package.loaded["config.run_panel"]
+      if not run then return false end
+      for _, t in ipairs(run.tabs) do if run.running(t) then return true end end
+      return false
+    end,
     toggle = function() require("config.run_panel").toggle() end,
   },
   {
@@ -96,8 +103,10 @@ local function valid(w) return w and vim.api.nvim_win_is_valid(w) end
 
 -- Ícone solto quando o painel está fechado; aberto, ganha um quadradinho arredondado
 -- discreto. Os ícones da Nerd Font ocupam quase duas células, então o fundo é
--- ponta + ícone + folga + ponta para o ícone ficar centralizado.
-local WIDTH = 5
+-- ponta + ícone + folga + ponta, com uma coluna de margem de cada lado para o destaque
+-- ficar no meio da faixa escura (sem encostar na borda da tela).
+-- Item com algo rodando (badge, ex.: Run): o ícone fica verde.
+local WIDTH = 6
 local LCAP, RCAP = "\u{E0B6}", "\u{E0B4}" -- meias-luas (Ghostty desenha nativamente)
 
 function M.render()
@@ -112,7 +121,7 @@ function M.render()
   local lines, rows = { "" }, {}
   local function add(list)
     for _, i in ipairs(list) do
-      table.insert(lines, " " .. LCAP .. M.items[i].icon .. " " .. RCAP)
+      table.insert(lines, " " .. LCAP .. M.items[i].icon .. " " .. RCAP .. " ")
       rows[#lines] = i
       table.insert(lines, "")
     end
@@ -132,12 +141,14 @@ function M.render()
     local l = lines[row]
     local a = 1                    -- meia-lua esquerda (bytes)
     local b = a + #LCAP            -- miolo: ícone e folga
-    local c = #l - #RCAP           -- meia-lua direita
-    local body = on and "ActivityBarActive" or "ActivityBarItem"
+    local c = #l - 1 - #RCAP       -- meia-lua direita
+    local ok_b, busy_ = pcall(M.items[i].badge or function() return false end)
+    busy_ = ok_b and busy_
+    local body = on and (busy_ and "ActivityBarActiveBusy" or "ActivityBarActive") or (busy_ and "ActivityBarItemBusy" or "ActivityBarItem")
     local cap = on and "ActivityBarCap" or "ActivityBarCapOff"
     vim.api.nvim_buf_set_extmark(M.buf, ns, row - 1, a, { end_col = b, hl_group = cap })
     vim.api.nvim_buf_set_extmark(M.buf, ns, row - 1, b, { end_col = c, hl_group = body })
-    vim.api.nvim_buf_set_extmark(M.buf, ns, row - 1, c, { end_col = #l, hl_group = cap })
+    vim.api.nvim_buf_set_extmark(M.buf, ns, row - 1, c, { end_col = #l - 1, hl_group = cap })
   end
 end
 
@@ -299,6 +310,8 @@ local function colors()
   set(0, "ActivityBarCapOff", { fg = strip, bg = strip })
   set(0, "ActivityBarActive", { fg = "#DFE1E5", bg = active })
   set(0, "ActivityBarCap", { fg = active, bg = strip })
+  set(0, "ActivityBarItemBusy", { fg = c.hint, bg = strip })
+  set(0, "ActivityBarActiveBusy", { fg = c.hint, bg = active })
 end
 colors()
 vim.api.nvim_create_autocmd("ColorScheme", { callback = colors })
