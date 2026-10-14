@@ -115,6 +115,8 @@ return function(cfg)
     -- o painel Problems também fica embaixo
     local problems = package.loaded["config.problems"]
     if problems and problems.is_open() and M.layout == "bottom" then problems.close() end
+    local git_log = package.loaded["config.git_log"]
+    if git_log and git_log.is_open() and M.layout == "bottom" then git_log.close() end
     local L = layouts[M.layout]
     if M.layout == "float" then
       local w = math.floor(vim.o.columns * L.width)

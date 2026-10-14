@@ -165,6 +165,8 @@ function M.open()
     local ok, p = pcall(require, mod)
     if ok and p.is_open() then p.hide() end
   end
+  local git_log = package.loaded["config.git_log"]
+  if git_log and git_log.is_open() then git_log.close() end
   if not (st.buf and vim.api.nvim_buf_is_valid(st.buf)) then
     st.buf = vim.api.nvim_create_buf(false, true)
     vim.bo[st.buf].bufhidden = "hide"
