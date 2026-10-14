@@ -291,9 +291,9 @@ local function colors()
   local ok, c = pcall(require, "config.palette")
   if not ok then return end
   local set = vim.api.nvim_set_hl
-  -- Faixa um tom acima do editor (bg_alt), ícones cinza-claro; o painel aberto ganha só
+  -- Faixa no fundo das ilhas (canvas), ícones cinza-claro; o painel aberto ganha só
   -- um quadradinho arredondado cinza e o ícone clareia, sem cor de destaque
-  local strip, active = c.bg_alt, "#35373C"
+  local strip, active = c.canvas, "#2B2D31"
   set(0, "ActivityBar", { fg = c.fg_dim, bg = strip })
   set(0, "ActivityBarItem", { fg = "#9DA0A8", bg = strip })
   set(0, "ActivityBarCapOff", { fg = strip, bg = strip })

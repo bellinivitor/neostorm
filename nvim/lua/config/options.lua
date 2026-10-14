@@ -8,7 +8,16 @@ opt.termguicolors = true
 opt.scrolloff = 8
 opt.numberwidth = 5
 opt.laststatus = 3
-opt.fillchars = { eob = " ", vert = "\u{2502}", fold = " ", diff = "\u{2571}" }
+-- Sem traço entre as janelas: cada coluna fica como uma ilha, como no tema Islands do PhpStorm.
+-- O separador é um bloco parcial na cor da ilha sobre o fundo (canvas), então só uma faixa
+-- fina do fundo aparece: 3/8 da largura entre colunas (▋) e 1/8 da altura entre linhas (▇).
+-- Cores em colors/phpstorm.lua (WinSeparator)
+local V, H = "\u{258B}", "\u{2587}"
+opt.fillchars = {
+  eob = " ", fold = " ", diff = "\u{2571}",
+  vert = V, vertleft = V, vertright = V, verthoriz = V,
+  horiz = H, horizup = H, horizdown = H,
+}
 opt.pumheight = 12
 opt.wrap = false
 

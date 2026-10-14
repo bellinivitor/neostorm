@@ -10,6 +10,10 @@ vim.g.neovide_input_macos_option_key_is_meta = "only_left"
 vim.g.neovide_cursor_animation_length = 0.04
 vim.g.neovide_cursor_trail_size = 0.3
 vim.g.neovide_scroll_animation_length = 0.15
-vim.g.neovide_padding_top = 6
+-- sem margem em cima: o Neovide pinta a margem com a cor do editor, e em cima fica a barra de abas (fundo escuro)
+vim.g.neovide_padding_top = 0
 vim.g.neovide_padding_left = 6
 vim.g.neovide_scale_factor = 1.0
+
+-- Janelas flutuantes com cantos arredondados (as ilhas do painel de Git, menus, popups)
+vim.g.neovide_floating_corner_radius = 0.4

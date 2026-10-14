@@ -189,17 +189,17 @@ function M.colors()
   local card, sel = "#26282C", "#2A3650"
   local set = vim.api.nvim_set_hl
   icon_hl_cache = {}
-  set(0, "TabCardFill", { bg = c.bg })
+  set(0, "TabCardFill", { bg = c.canvas })
   set(0, "TabCard", { fg = c.fg_faint, bg = card })
-  set(0, "TabCardCap", { fg = card, bg = c.bg })
+  set(0, "TabCardCap", { fg = card, bg = c.canvas })
   set(0, "TabCardSel", { fg = "#DFE1E5", bg = sel })
-  set(0, "TabCardCapSel", { fg = sel, bg = c.bg })
+  set(0, "TabCardCapSel", { fg = sel, bg = c.canvas })
   set(0, "TabCardClose", { fg = c.linenr, bg = card })
   set(0, "TabCardCloseSel", { fg = c.fg_dim, bg = sel })
   set(0, "TabCardModified", { fg = c.fg_dim, bg = card })
   set(0, "TabCardModifiedSel", { fg = c.accent, bg = sel })
-  set(0, "TabCardMore", { fg = c.fg_dim, bg = c.bg })
-  set(0, "TabCardTree", { fg = c.fg_dim, bg = c.bg })
+  set(0, "TabCardMore", { fg = c.fg_dim, bg = c.canvas })
+  set(0, "TabCardTree", { fg = c.fg_dim, bg = c.canvas })
   set(0, "TabLineFill", { link = "TabCardFill" })
 end
 

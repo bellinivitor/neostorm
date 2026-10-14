@@ -214,7 +214,7 @@ return {
     -- Barra de baixo como a do PhpStorm: modo à esquerda, infos e branch à direita
     opts = function()
       local c = require("config.palette")
-      local bar = { fg = c.fg_dim, bg = c.bg_alt }
+      local bar = { fg = c.fg_dim, bg = c.canvas } -- barra no fundo das ilhas
       local function mode(bg) return { a = { fg = "#FFFFFF", bg = bg, gui = "bold" }, b = bar, c = bar } end
       local theme = {
         normal = mode("#2E436E"),

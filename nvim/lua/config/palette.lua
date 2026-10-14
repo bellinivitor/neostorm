@@ -1,6 +1,7 @@
 -- Paleta do tema "phpstorm" (cores tiradas da tela do PhpStorm)
 return {
-  bg = "#1C1D1F",        -- fundo do editor
+  bg = "#1C1D1F",        -- fundo do editor (e de cada ilha)
+  canvas = "#161719",    -- fundo atrás das ilhas: abas, barras e o vão entre as colunas
   bg_alt = "#222427",    -- abas, barra de status, painéis
   bg_float = "#2B2D30",  -- menus e janelas flutuantes
   bg_hint = "#28292C",   -- caixinha do nome de parâmetro (inlay hint)
