@@ -39,6 +39,10 @@ local function after_change()
   vim.cmd("silent! checktime")
   pcall(function() require("neo-tree.sources.manager").refresh("filesystem") end)
   pcall(function() if require("config.commit").is_open() then require("config.commit").refresh() end end)
+  pcall(function()
+    local gl = package.loaded["config.git_log"]
+    if gl and gl.is_open() then gl.refresh() end
+  end)
   vim.cmd("redrawstatus!")
 end
 
@@ -199,9 +203,15 @@ end
 -- Ações de uma branch (usadas pelo submenu)
 -- ---------------------------------------------------------------------------
 local function git_report(args, ok_msg, fail_msg)
+  local repo = st.root or root()
   git(args, function(r)
-    if r.code == 0 then notify(ok_msg); after_change()
-    else notify(fail_msg .. ":\n" .. vim.trim((r.stdout or "") .. (r.stderr or ""))) ; after_change() end
+    if r.code == 0 then notify(ok_msg); after_change(); return end
+    after_change()
+    -- parou em conflito: abre a janela de conflitos em vez de só mostrar o erro
+    if require("config.conflicts").check(repo) then
+      return notify(fail_msg .. ": há arquivos em conflito para resolver.", vim.log.levels.WARN)
+    end
+    notify(fail_msg .. ":\n" .. vim.trim((r.stdout or "") .. (r.stderr or "")))
   end)
 end
 
@@ -356,6 +366,13 @@ local function branch_actions(item)
   -- sem separador sobrando no fim
   while it[#it] and it[#it].sep do table.remove(it) end
   return it
+end
+
+--- Ações de uma branch fora do popup (menu da árvore de branches na janela de Git)
+function M.actions_for(name, remote)
+  st.root = root()
+  st.data = load()
+  return vim.tbl_filter(function(it) return not it.sep end, branch_actions({ name = name, remote = remote }))
 end
 
 -- ---------------------------------------------------------------------------

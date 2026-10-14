@@ -86,7 +86,13 @@ cd ~/neostorm && git add -A && git commit -m "descrição" && git push
   Merge, Update, Push, Tracked Branch, Rename, Delete.
 - **Compare de branches:** commits que uma tem e a outra não, nos dois sentidos, com detalhes e arquivos do commit.
 - **Diff com os seus arquivos:** lista de arquivos alterados e diff lado a lado.
-- **Janela de Git** (`Cmd+9`): árvore de branches, log com grafo colorido, arquivos e detalhes de cada commit.
+- **Janela de Git** (`Cmd+9`): painel embaixo com árvore de branches, log com grafo colorido, arquivos e detalhes
+  de cada commit. `m` ou botão direito abre as ações: no commit, Copiar hash, Nova branch, Checkout, Cherry-pick,
+  Reverter e Reset (soft/mixed/hard); na branch, as mesmas ações do popup de branches.
+- **Conflitos de merge/rebase/cherry-pick:** quando uma operação para em conflito, abre a lista dos arquivos.
+  No arquivo, cada bloco ganha cor e atalhos: `co` usa o lado de cima (HEAD), `ct` o de baixo, `cb` os dois, `c0`
+  nenhum (ou `Alt+Enter` no bloco); `]x`/`[x` navegam. Resolvido o último bloco, o arquivo é salvo e marcado como
+  resolvido. Na lista: `o`/`t` usam um lado no arquivo inteiro, `c` continua a operação, `x` aborta.
 - **Janela de Commit** (`Cmd+0`/`Cmd+K`): marcar arquivos, mensagem, Commit e Commit and Push.
 - **Changelists** (como no PhpStorm): crie listas (`n` ou botão direito no cabeçalho), mova arquivos entre elas (`m`),
   renomeie, apague e escolha a **ativa** (recebe os arquivos alterados daqui para a frente). Rollback no cabeçalho
@@ -174,6 +180,9 @@ cd ~/neostorm && git add -A && git commit -m "descrição" && git push
 | `Cmd+Shift+K` | Push |
 | `Cmd+Option+N` | Nova branch |
 | `Espaço g B` | Branches |
+| `Espaço g x` | Conflitos (lista, continuar, abortar) |
+| `co` / `ct` / `cb` / `c0` | No bloco em conflito: usar o de cima / o de baixo / os dois / nenhum |
+| `]x` / `[x` | Próximo / anterior conflito |
 | `Espaço g b` | Blame na linha (liga/desliga) |
 | `Espaço g h` / `g d` / `g r` | Alteração: menu / ver diff / rollback |
 | `Cmd+Option+Z` | Rollback das linhas |

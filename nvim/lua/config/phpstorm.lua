@@ -129,6 +129,9 @@ map("n", "<leader>tf", tests("file"), { desc = "Testes do arquivo" })
 map("n", "<leader>ts", tests("suite"), { desc = "Suíte inteira" })
 map("n", "<leader>tl", tests("again"), { desc = "Repetir o último teste" })
 
+-- Conflitos de merge/rebase: lista dos arquivos, continuar e abortar (config/conflicts.lua)
+map("n", "<leader>gx", function() require("config.conflicts").open() end, { desc = "Conflitos" })
+
 -- Problems: erros e avisos agrupados por arquivo (Cmd+6, como no PhpStorm)
 map("n", "<D-6>", function() require("config.problems").toggle() end, { desc = "Problems" })
 map("n", "<leader>xx", function() require("config.problems").toggle() end, { desc = "Problems" })

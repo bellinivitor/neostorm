@@ -8,7 +8,8 @@
 --   ╰──────────────╯ ╰─────────────────────────────────────────────────────────────────────────╯ │ 󰉋 app/Models      1  │
 -- Enter: na árvore escolhe a branch (ou abre/fecha a pasta); no log vai para os arquivos;
 -- num arquivo abre o diff. / busca por texto, autor ou hash. r atualiza. Tab troca de ilha.
--- Esc limpa a busca (ou volta para o código). q fecha.
+-- m (ou botão direito) abre as ações: no commit (cherry-pick, revert, reset, nova branch…)
+-- e na branch (checkout, merge, rebase…). Esc limpa a busca (ou volta para o código). q fecha.
 local M = {}
 
 local ns = vim.api.nvim_create_namespace("git_log")
@@ -334,7 +335,7 @@ local function render_log()
   vim.wo[st.win.log].winbar = " Log   %#GitLogBarStrong#" .. esc(label) .. "%#GitLogBarDim#  " .. plural(st.count, "commit", "commits")
     .. (st.filter and ("%#GitLogBar#   busca %#GitLogFilter# " .. esc(st.filter) .. " %#GitLogBar#") or "")
     .. "%#GitLogBar#%<%="
-    .. action(1, "/", "Buscar") .. action(2, "r", "Atualizar") .. action(3, "q", "Fechar")
+    .. action(1, "/", "Buscar") .. action(4, "m", "Ações") .. action(2, "r", "Atualizar") .. action(3, "q", "Fechar")
 end
 
 -- ---------------------------------------------------------------------------
@@ -526,10 +527,102 @@ local function escape()
   if main then vim.api.nvim_set_current_win(main) end
 end
 
+-- ---------------------------------------------------------------------------
+-- Menu de ações (m ou botão direito): no commit e na branch, como no PhpStorm
+-- ---------------------------------------------------------------------------
+local function notify(msg, level) vim.notify(msg, level or vim.log.levels.INFO, { title = "Git" }) end
+
+local function after_git()
+  vim.cmd("silent! checktime")
+  pcall(function() require("neo-tree.sources.manager").refresh("filesystem") end)
+  pcall(function() if require("config.commit").is_open() then require("config.commit").refresh() end end)
+  vim.cmd("redrawstatus!")
+  if M.is_open() then refresh() end
+end
+
+-- roda uma operação; se parar em conflito, abre a janela de conflitos
+local function git_op(args, ok_msg, fail_msg)
+  local cmd = { "git" }
+  vim.list_extend(cmd, args)
+  local r = vim.system(cmd, { cwd = st.root, text = true }):wait()
+  local root = st.root
+  after_git()
+  if r.code == 0 then return notify(ok_msg) end
+  if require("config.conflicts").check(root) then
+    return notify(fail_msg .. ": há arquivos em conflito para resolver.", vim.log.levels.WARN)
+  end
+  notify(fail_msg .. ":\n" .. vim.trim((r.stdout or "") .. (r.stderr or "")), vim.log.levels.WARN)
+end
+
+local function reset_menu(c, short)
+  local cur = st.current ~= "" and st.current or "HEAD"
+  require("config.popup_menu").open({
+    { label = "Soft: mantém as mudanças preparadas", key = "s", run = function()
+      git_op({ "reset", "--soft", c.hash }, "'" .. cur .. "' agora aponta para " .. short, "Reset falhou")
+    end },
+    { label = "Mixed: mantém as mudanças nos arquivos", key = "m", run = function()
+      git_op({ "reset", "--mixed", c.hash }, "'" .. cur .. "' agora aponta para " .. short, "Reset falhou")
+    end },
+    { label = "Hard: descarta as mudanças", key = "h", run = function()
+      if vim.fn.confirm("Reset hard de '" .. cur .. "' para " .. short .. "?\nAs mudanças não commitadas e os commits depois dele somem da branch.",
+        "&Descartar e resetar\n&Cancelar", 2, "Warning") ~= 1 then return end
+      git_op({ "reset", "--hard", c.hash }, "'" .. cur .. "' agora aponta para " .. short, "Reset falhou")
+    end },
+  }, { title = "Reset de '" .. cur .. "' para " .. short, width = 44 })
+end
+
+local function commit_menu(opts)
+  local c = selected_commit()
+  if not c then return end
+  local short = c.hash:sub(1, 7)
+  -- em commit de merge, cherry-pick e revert usam o primeiro pai (a branch que recebeu o merge)
+  local parent = c.merge and { "-m", "1" } or {}
+  require("config.popup_menu").open({
+    { label = "Copiar hash", key = "y", run = function()
+      vim.fn.setreg("+", c.hash)
+      notify("Hash copiado: " .. short)
+    end },
+    { label = "Nova branch a partir daqui…", key = "b", run = function() require("config.branches").new_branch(c.hash) end },
+    { label = "Checkout deste commit", key = "o", run = function()
+      git_op({ "checkout", c.hash }, "Checkout de " .. short .. " (sem branch; crie uma para commitar aqui)", "Checkout falhou")
+    end },
+    { label = "Cherry-pick", key = "p", run = function()
+      git_op(vim.list_extend({ "cherry-pick" }, vim.list_extend(vim.deepcopy(parent), { c.hash })), "Cherry-pick de " .. short .. " feito", "Cherry-pick parou")
+    end },
+    { label = "Reverter commit", key = "v", run = function()
+      git_op(vim.list_extend({ "revert", "--no-edit" }, vim.list_extend(vim.deepcopy(parent), { c.hash })), "Commit " .. short .. " revertido", "Revert parou")
+    end },
+    { label = "Reset da branch atual para cá…", key = "r", run = function() reset_menu(c, short) end },
+  }, { title = short, width = 38, mouse = opts and opts.mouse })
+end
+
+local function tree_menu(opts)
+  local it = st.tree[vim.api.nvim_win_get_cursor(st.win.tree)[1]]
+  if not (it and it.kind == "ref" and it.ref ~= "--all" and it.ref ~= "HEAD") then return end
+  local remote = st.remote_names[it.ref:match("^([^/]+)/") or ""] and not vim.tbl_contains(st.locals, it.ref)
+  local items = require("config.branches").actions_for(it.ref, remote)
+  local width = 24
+  for _, x in ipairs(items) do width = math.max(width, vim.fn.strdisplaywidth(x.label) + (x.hint and #x.hint + 4 or 0) + 4) end
+  require("config.popup_menu").open(items, { title = it.ref, width = math.min(width, 56), mouse = opts and opts.mouse })
+end
+
+-- botão direito: move o cursor para a linha clicada e abre o menu ali
+local function right_click(win, menu)
+  return function()
+    local p = vim.fn.getmousepos()
+    if p.winid ~= win() then return end
+    vim.api.nvim_set_current_win(p.winid)
+    pcall(vim.api.nvim_win_set_cursor, p.winid, { p.line, 0 })
+    menu({ mouse = true })
+  end
+end
+
+M.refresh = function() if M.is_open() then refresh() end end
+
 -- cliques nos atalhos da barra do log
 function _G.GitLogAction(id)
   vim.schedule(function()
-    if id == 1 then search() elseif id == 2 then refresh() else M.close() end
+    if id == 1 then search() elseif id == 2 then refresh() elseif id == 4 then commit_menu() else M.close() end
   end)
 end
 
@@ -691,6 +784,10 @@ function M.open()
     vim.api.nvim_set_current_win(st.win.info)
     if st.first_file then pcall(vim.api.nvim_win_set_cursor, st.win.info, { st.first_file, 0 }) end
   end)
+  map(st.buf.log, "m", function() commit_menu() end)
+  map(st.buf.log, "<RightMouse>", right_click(function() return st.win.log end, commit_menu))
+  map(st.buf.tree, "m", function() tree_menu() end)
+  map(st.buf.tree, "<RightMouse>", right_click(function() return st.win.tree end, tree_menu))
   map(st.buf.info, "<CR>", open_file)
   map(st.buf.info, "<2-LeftMouse>", require("config.panels").after_click(open_file))
 
