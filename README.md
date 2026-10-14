@@ -85,6 +85,9 @@ cd ~/neostorm && git add -A && git commit -m "descrição" && git push
 - **Diff com os seus arquivos:** lista de arquivos alterados e diff lado a lado.
 - **Janela de Git** (`Cmd+9`): árvore de branches, log com grafo colorido, arquivos e detalhes de cada commit.
 - **Janela de Commit** (`Cmd+0`/`Cmd+K`): marcar arquivos, mensagem, Commit e Commit and Push.
+- **Changelists** (como no PhpStorm): crie listas (`n` ou botão direito no cabeçalho), mova arquivos entre elas (`m`),
+  renomeie, apague e escolha a **ativa** (recebe os arquivos alterados daqui para a frente). Rollback no cabeçalho
+  desfaz todos os arquivos da lista, com uma confirmação só. Ficam em `.git/neostorm-changelists.json`.
 
 ### Run, Terminal e Claude
 - **Run Anything** (`Cmd+Shift+X`): recentes, scripts do `package.json`/`composer.json`, artisan e Makefile;
@@ -194,7 +197,7 @@ cd ~/neostorm && git add -A && git commit -m "descrição" && git push
 
 | Onde | Teclas |
 |---|---|
-| **Commit** | `Espaço`/`x` marca arquivo · `Tab` abre/fecha grupo · `D` diff · `o` abre · `Cmd+Option+Z` rollback · `i` mensagem · `Cmd+Enter` commit · `r` atualiza · `q` fecha |
+| **Commit** | `Espaço`/`x` marca arquivo (no cabeçalho: a lista toda) · `Tab` abre/fecha grupo · `D` diff · `o`/`Cmd+↓` abre o arquivo · `n` nova changelist · `m` move para outra changelist · `Cmd+Option+Z` rollback (no cabeçalho: a lista toda) · botão direito: menu · `i` mensagem · `Cmd+Enter` commit · `r` atualiza · `q` fecha |
 | **Popup de branches** | digite para buscar · `Enter`/clique abre o submenu da branch · no submenu `↑↓` e `Enter`, `Esc`/`←` volta |
 | **Compare de branches** | `j`/`k` anda · `Enter` vai aos arquivos / abre o diff · `Tab` troca de painel · `q`/`Cmd+W` fecha |
 | **Diff com seus arquivos** | `j`/`k` troca de arquivo · `]c`/`[c` próxima/anterior diferença · `o` abre o arquivo · `Tab` · `q` fecha |

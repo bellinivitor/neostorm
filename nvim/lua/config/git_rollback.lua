@@ -44,6 +44,7 @@ local function refresh()
   pcall(function() require("neo-tree.sources.manager").refresh("filesystem") end)
 end
 
+--- opts: { force = true (sem confirmação), quiet = true (sem aviso no fim) }
 function M.rollback(path, opts)
   opts = opts or {}
   local list, err, root = M.changes(path)
@@ -80,7 +81,9 @@ function M.rollback(path, opts)
   end
 
   refresh()
-  vim.notify(("Rollback feito: %d arquivo(s)"):format(#list), vim.log.levels.INFO)
+  -- (quiet: quem chamou junta vários arquivos e avisa uma vez só)
+  if not opts.quiet then vim.notify(("Rollback feito: %d arquivo(s)"):format(#list), vim.log.levels.INFO) end
+  return #list
 end
 
 -- Janela de código (não flutuante, sem painel/terminal); cria uma se não houver

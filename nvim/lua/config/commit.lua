@@ -18,6 +18,38 @@ M.win = {}          -- list / msg / act
 
 local ns = vim.api.nvim_create_namespace("commit_panel")
 
+-- Changelists (como no PhpStorm): listas nomeadas de arquivos alterados. A "ativa" recebe os
+-- arquivos alterados daqui para a frente. Ficam em .git/neostorm-changelists.json (não vão
+-- para o commit e sobrevivem ao fechar o Neovim).
+local DEFAULT_CL = "Changes"
+M.cl = { lists = { DEFAULT_CL }, active = DEFAULT_CL, files = {} }
+
+local function cl_file()
+  if not M.root then return nil end
+  local r = vim.system({ "git", "rev-parse", "--absolute-git-dir" }, { cwd = M.root, text = true }):wait()
+  local dir = vim.trim(r.stdout or "")
+  return r.code == 0 and dir ~= "" and (dir .. "/neostorm-changelists.json") or nil
+end
+
+local function cl_load()
+  M.cl = { lists = { DEFAULT_CL }, active = DEFAULT_CL, files = {} }
+  local path = cl_file()
+  local f = path and io.open(path, "r")
+  if not f then return end
+  local ok, data = pcall(vim.json.decode, f:read("*a"))
+  f:close()
+  if ok and type(data) == "table" and type(data.lists) == "table" and #data.lists > 0 then
+    M.cl.lists, M.cl.files = data.lists, type(data.files) == "table" and data.files or {}
+    M.cl.active = vim.tbl_contains(data.lists, data.active) and data.active or data.lists[1]
+  end
+end
+
+local function cl_save()
+  local path = cl_file()
+  local f = path and io.open(path, "w")
+  if f then f:write(vim.json.encode(M.cl)); f:close() end
+end
+
 -- ---------------------------------------------------------------------------
 -- git
 -- ---------------------------------------------------------------------------
@@ -49,6 +81,19 @@ local function load_status()
     i = i + 1
   end
   table.sort(M.items, function(a, b) return a.rel < b.rel end)
+  -- changelists: arquivo novo na lista vai para a ativa; tira os que não estão mais alterados
+  cl_load()
+  local present, changed = {}, false
+  for _, it in ipairs(M.items) do
+    present[it.rel] = true
+    local list = M.cl.files[it.rel]
+    if list and not vim.tbl_contains(M.cl.lists, list) then M.cl.files[it.rel] = nil; list = nil; changed = true end
+    if not list and not it.untracked then M.cl.files[it.rel] = M.cl.active; changed = true end
+  end
+  for rel in pairs(M.cl.files) do
+    if not present[rel] then M.cl.files[rel] = nil; changed = true end
+  end
+  if changed then cl_save() end
 end
 
 local function status_of(item)
@@ -64,9 +109,18 @@ end
 -- Desenho da lista
 -- ---------------------------------------------------------------------------
 local function groups()
-  local changes, unversioned = {}, {}
-  for _, it in ipairs(M.items) do table.insert(it.untracked and unversioned or changes, it) end
-  return { { id = "changes", name = "Changes", items = changes }, { id = "unversioned", name = "Unversioned Files", items = unversioned } }
+  local out, by_name, unversioned = {}, {}, {}
+  for _, name in ipairs(M.cl.lists) do
+    local g = { id = "cl:" .. name, name = name, items = {}, changelist = true, active = name == M.cl.active }
+    by_name[name] = g
+    table.insert(out, g)
+  end
+  for _, it in ipairs(M.items) do
+    local g = by_name[M.cl.files[it.rel] or ""]
+    if g then table.insert(g.items, it) else table.insert(unversioned, it) end
+  end
+  table.insert(out, { id = "unversioned", name = "Unversioned Files", items = unversioned })
+  return out
 end
 
 function M.render()
@@ -87,12 +141,14 @@ function M.render()
   end
 
   for _, g in ipairs(groups()) do
-    if #g.items > 0 then
-      local all = true
+    -- changelists aparecem mesmo vazias (como no PhpStorm); "Unversioned Files" só com arquivos
+    if #g.items > 0 or (g.changelist and M.root and (#M.items > 0 or #M.cl.lists > 1)) then
+      local all = #g.items > 0
       for _, it in ipairs(g.items) do if not M.checked[it.rel] then all = false end end
       local arrow = M.collapsed[g.id] and ICON.closed or ICON.open
       local box = all and ICON.on or ICON.off
-      local count = #g.items == 1 and "1 file" or (#g.items .. " files")
+      local count = #g.items == 0 and "vazia" or (#g.items == 1 and "1 file" or (#g.items .. " files"))
+      if g.active and #M.cl.lists > 1 then count = count .. "  ativa" end
       local line = " " .. arrow .. " " .. box .. " " .. g.name .. "  " .. count
       local b1 = #(" " .. arrow .. " ")
       local b2 = b1 + #box
@@ -175,18 +231,113 @@ function M.diff_line(l)
   if meta and meta.kind == "file" then require("config.git_rollback").diff(abs(meta.item)) end
 end
 
+-- Rollback de todos os arquivos de uma changelist, com uma confirmação só
+function M.rollback_list(group)
+  local items = group.items
+  if #items == 0 then return vim.notify("A changelist '" .. group.name .. "' está vazia", vim.log.levels.INFO) end
+  local new = vim.tbl_filter(function(it) return it.untracked or it.x == "A" end, items)
+  local msg = "Desfazer as alterações de " .. (#items == 1 and "1 arquivo" or (#items .. " arquivos")) .. " da changelist '" .. group.name .. "'?"
+  if #new > 0 then
+    msg = msg .. "\n\n" .. (#new == 1 and "1 arquivo novo será APAGADO:" or (#new .. " arquivos novos serão APAGADOS:"))
+    for k, it in ipairs(new) do
+      if k > 5 then msg = msg .. "\n  ..." break end
+      msg = msg .. "\n  " .. it.rel
+    end
+  end
+  if vim.fn.confirm(msg, "&Rollback\n&Cancelar", 2, "Question") ~= 1 then return end
+  local n = 0
+  for _, it in ipairs(items) do
+    n = n + (require("config.git_rollback").rollback(abs(it), { force = true, quiet = true }) or 0)
+  end
+  vim.notify(("Rollback feito: %d arquivo(s) de '%s'"):format(n, group.name), vim.log.levels.INFO)
+  M.refresh()
+end
+
 function M.rollback_line(l)
   local meta = line_meta(l)
   if not meta then return end
   if meta.kind == "file" then
     require("config.git_rollback").rollback(abs(meta.item))
-  else
-    -- grupo inteiro: os arquivos marcados
-    for _, it in ipairs(meta.group.items) do
-      if M.checked[it.rel] then require("config.git_rollback").rollback(abs(it)) end
-    end
+    return M.refresh()
   end
-  M.refresh()
+  -- cabeçalho: todos os arquivos da changelist
+  if meta.group.changelist then return M.rollback_list(meta.group) end
+end
+
+-- ---------------------------------------------------------------------------
+-- Changelists
+-- ---------------------------------------------------------------------------
+local function valid_name(name, except)
+  name = vim.trim(name or "")
+  if name == "" then return nil end
+  if name ~= except and vim.tbl_contains(M.cl.lists, name) then
+    vim.notify("Já existe uma changelist '" .. name .. "'", vim.log.levels.WARN)
+    return nil
+  end
+  return name
+end
+
+--- Nova changelist; cb(nome) é chamado depois de criar (ex.: mover um arquivo para ela)
+function M.new_changelist(cb)
+  vim.ui.input({ prompt = "Nova changelist: " }, function(input)
+    local name = valid_name(input)
+    if not name then return end
+    table.insert(M.cl.lists, name)
+    cl_save()
+    if cb then cb(name) end
+    M.render()
+  end)
+end
+
+function M.rename_changelist(group)
+  vim.ui.input({ prompt = "Novo nome para '" .. group.name .. "': ", default = group.name }, function(input)
+    local name = valid_name(input, group.name)
+    if not name or name == group.name then return end
+    for i, l in ipairs(M.cl.lists) do if l == group.name then M.cl.lists[i] = name end end
+    for rel, l in pairs(M.cl.files) do if l == group.name then M.cl.files[rel] = name end end
+    if M.cl.active == group.name then M.cl.active = name end
+    cl_save()
+    M.render()
+  end)
+end
+
+function M.set_active(group)
+  M.cl.active = group.name
+  cl_save()
+  vim.notify("Changelist ativa: " .. group.name, vim.log.levels.INFO)
+  M.render()
+end
+
+-- Apaga a changelist; os arquivos dela vão para a ativa
+function M.delete_changelist(group)
+  if group.name == M.cl.active then return vim.notify("Não dá para apagar a changelist ativa", vim.log.levels.WARN) end
+  if #group.items > 0 and vim.fn.confirm("Apagar a changelist '" .. group.name .. "'?\nOs " .. #group.items
+    .. " arquivo(s) dela vão para '" .. M.cl.active .. "' (as alterações continuam).", "&Apagar\n&Cancelar", 2, "Question") ~= 1 then return end
+  M.cl.lists = vim.tbl_filter(function(l) return l ~= group.name end, M.cl.lists)
+  for rel, l in pairs(M.cl.files) do if l == group.name then M.cl.files[rel] = M.cl.active end end
+  cl_save()
+  M.render()
+end
+
+--- Move o arquivo da linha para outra changelist (ou uma nova)
+function M.move_line(l)
+  local meta = line_meta(l)
+  if not (meta and meta.kind == "file") then return vim.notify("Escolha um arquivo para mover", vim.log.levels.INFO) end
+  local rel = meta.item.rel
+  local current = M.cl.files[rel]
+  local NEW = "\u{F0415}  Nova changelist…"
+  local options = vim.tbl_filter(function(name) return name ~= current end, M.cl.lists)
+  table.insert(options, NEW)
+  local function move(name)
+    M.cl.files[rel] = name
+    cl_save()
+    M.render()
+  end
+  vim.ui.select(options, { prompt = "Mover " .. vim.fn.fnamemodify(rel, ":t") .. " para" }, function(choice)
+    if not choice then return end
+    if choice == NEW then return vim.defer_fn(function() M.new_changelist(move) end, 50) end
+    move(choice)
+  end)
 end
 
 -- Menu do botão direito numa linha da lista
@@ -196,9 +347,23 @@ function M.menu(l)
   local items = {}
   if meta.kind == "file" then
     table.insert(items, { label = "\u{F0EC6}  Ver diff", key = "d", run = function() M.diff_line(l) end })
+    table.insert(items, { label = "\u{F0453}  Mover para outra changelist…", key = "m", run = function() M.move_line(l) end })
+    table.insert(items, { label = "\u{F054C}  Rollback", key = "r", hint = "⌥⌘Z", run = function() M.rollback_line(l) end })
+  elseif meta.group.changelist then
+    local g = meta.group
+    if #g.items > 0 then
+      table.insert(items, { label = "\u{F054C}  Rollback", key = "r", hint = "⌥⌘Z", run = function() M.rollback_list(g) end })
+    end
+    table.insert(items, { label = "\u{F0415}  Nova changelist…", key = "n", run = function() M.new_changelist() end })
+    table.insert(items, { label = "\u{F03EB}  Renomear…", key = "e", run = function() M.rename_changelist(g) end })
+    if not g.active then
+      table.insert(items, { label = "\u{F012C}  Definir como ativa", key = "a", run = function() M.set_active(g) end })
+      table.insert(items, { label = "\u{F01B4}  Apagar changelist", key = "x", run = function() M.delete_changelist(g) end })
+    end
+  else
+    table.insert(items, { label = "\u{F0415}  Nova changelist…", key = "n", run = function() M.new_changelist() end })
   end
-  table.insert(items, { label = "\u{F054C}  Rollback", key = "r", hint = "⌥⌘Z", run = function() M.rollback_line(l) end })
-  require("config.popup_menu").open(items, { mouse = true })
+  require("config.popup_menu").open(items, { mouse = true, width = 34 })
 end
 
 -- ---------------------------------------------------------------------------
@@ -354,7 +519,7 @@ local function ensure_buffers()
     end, "Abrir diff / expandir grupo")
     map("<Tab>", function() M.toggle_collapse() end, "Expandir/recolher grupo")
     map("D", function() M.diff_line() end, "Ver diff")
-    -- F4 / o: abre o arquivo no editor (como Jump to Source do PhpStorm)
+    -- F4 / o / Cmd+↓: abre o arquivo no editor (como Jump to Source do PhpStorm)
     local function open_file()
       local meta = line_meta()
       if not (meta and meta.kind == "file") then return end
@@ -369,9 +534,12 @@ local function ensure_buffers()
     end
     map("<F4>", open_file, "Abrir arquivo")
     map("o", open_file, "Abrir arquivo")
+    map("<D-Down>", open_file, "Abrir arquivo") -- Cmd+↓ (Jump to Source do PhpStorm)
     map("<D-M-z>", function() M.rollback_line() end, "Rollback")
     map("gr", function() M.rollback_line() end, "Rollback")
     map("r", function() M.refresh() end, "Atualizar")
+    map("n", function() M.new_changelist() end, "Nova changelist")
+    map("m", function() M.move_line() end, "Mover para outra changelist")
     map("q", function() M.close() end, "Fechar")
     map("<D-CR>", function() M.commit(false) end, "Commit")
     map("i", function() M.focus_message() end, "Escrever mensagem")

@@ -48,6 +48,8 @@ keybind = cmd+d=csi:100;9u
 keybind = cmd+backspace=csi:127;9u
 keybind = cmd+shift+arrow_up=csi:1;10A
 keybind = cmd+shift+arrow_down=csi:1;10B
+# Cmd+↓ (Jump to Source na janela de Commit); no Ghostty ele pulava entre prompts
+keybind = cmd+arrow_down=csi:1;9B
 
 # Busca e navegação
 keybind = cmd+f=csi:102;9u
