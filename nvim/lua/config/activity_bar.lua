@@ -233,6 +233,33 @@ local function on_mouse()
   return ""
 end
 
+-- Rolagem horizontal: o Neovim deixa rolar além do texto (o código some e só ficam
+-- as linhas dobradas e os textos virtuais, que não rolam). O limite é a linha mais
+-- longa entre as visíveis encostar na borda direita.
+function M.max_leftcol(win)
+  if vim.wo[win].wrap then return nil end
+  local info = vim.fn.getwininfo(win)[1]
+  if not info then return nil end
+  local longest = 0
+  vim.api.nvim_win_call(win, function()
+    for l = info.topline, info.botline do longest = math.max(longest, vim.fn.virtcol({ l, "$" }) - 1) end
+  end)
+  return math.max(0, longest - (info.width - info.textoff) + 1)
+end
+
+function M.clamp_hscroll(win)
+  if not valid(win) then return end
+  local max = M.max_leftcol(win)
+  if not max then return end
+  vim.api.nvim_win_call(win, function()
+    local view = vim.fn.winsaveview()
+    if view.leftcol > max then
+      view.leftcol = max
+      vim.fn.winrestview(view)
+    end
+  end)
+end
+
 function M.setup()
   -- Não abre em Neovims "de passagem" (mensagem de commit do git, Neovim dentro do terminal etc.)
   if vim.env.NVIM or vim.g.started_by_firenvim then return end
@@ -240,10 +267,18 @@ function M.setup()
   if type(arg) == "string" and arg:match("COMMIT_EDITMSG") or arg:match("git%-rebase%-todo") or arg:match("MERGE_MSG") then return end
   M.enabled = true
   vim.keymap.set({ "n", "i", "v", "t" }, "<LeftMouse>", on_mouse, { expr = true, desc = "Clique (barra de ferramentas)" })
-  -- A rodinha do mouse em cima da barra não rola nada (antes ela rolava os ícones para fora)
+  -- A rodinha do mouse em cima da barra não rola nada (antes ela rolava os ícones para fora).
+  -- No resto, a rolagem para a direita só vai até o fim da linha mais longa visível
   for _, key in ipairs({ "<ScrollWheelUp>", "<ScrollWheelDown>", "<ScrollWheelLeft>", "<ScrollWheelRight>" }) do
     vim.keymap.set({ "n", "i", "v", "t" }, key, function()
-      return valid(M.win) and vim.fn.getmousepos().winid == M.win and "" or key
+      local win = vim.fn.getmousepos().winid
+      if valid(M.win) and win == M.win then return "" end
+      if key == "<ScrollWheelRight>" and valid(win) then
+        local max = M.max_leftcol(win)
+        if max and vim.fn.getwininfo(win)[1].leftcol >= max then return "" end
+        vim.schedule(function() M.clamp_hscroll(win) end)
+      end
+      return key
     end, { expr = true })
   end
   local group = vim.api.nvim_create_augroup("activity_bar", { clear = true })
