@@ -38,6 +38,9 @@ end
 local function exec(buf, command, args, label, after)
   local client = phpactor(buf)
   if not client then
+    if vim.g.phpactor_without_php then
+      return notify("O Phpactor precisa do PHP 8.2 ou mais novo. Instale um pelo Herd (pode manter o 8.0 como padrão) e reabra o Neovim.", vim.log.levels.WARN)
+    end
     return notify("O Phpactor não está ativo neste arquivo (só funciona em PHP, dentro de um projeto).", vim.log.levels.WARN)
   end
   client:exec_cmd({ title = label, command = command, arguments = args }, { bufnr = buf }, function(err)

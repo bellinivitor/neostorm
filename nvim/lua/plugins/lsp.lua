@@ -107,7 +107,29 @@ return {
       -- Intelephense é pago, e as refatorações do Refactor This (Ctrl+T, config/refactor.lua),
       -- chamadas como comandos dele. Todo o resto (sugestões, erros, ir para definição)
       -- continua com o Intelephense, sem nada duplicado.
+      -- PHP para o Phpactor: ele exige 8.2+, e o `php` global é o do Herd, que pode ser
+      -- o PHP antigo de um projeto (ex.: 8.0). Usa o PHP mais novo instalado no Herd ou no
+      -- Homebrew; sem nenhum 8.2+, o Phpactor não é iniciado (antes ele morria e avisava
+      -- "Client phpactor quit with exit code 1" toda hora)
+      local function phpactor_php()
+        local found = {}
+        local herd = vim.fn.expand("~/Library/Application Support/Herd/bin")
+        for name in vim.fs.dir(herd) do
+          local major, minor = name:match("^php(%d)(%d+)$")
+          if major then table.insert(found, { tonumber(major) * 100 + tonumber(minor), herd .. "/" .. name }) end
+        end
+        for name in vim.fs.dir("/opt/homebrew/opt") do
+          local major, minor = name:match("^php@(%d)%.(%d+)$")
+          local bin = "/opt/homebrew/opt/" .. name .. "/bin/php"
+          if major and vim.uv.fs_stat(bin) then table.insert(found, { tonumber(major) * 100 + tonumber(minor), bin }) end
+        end
+        table.sort(found, function(x, y) return x[1] > y[1] end)
+        return found[1] and found[1][1] >= 802 and found[1][2] or nil
+      end
+      local phpactor_bin = phpactor_php()
+      vim.g.phpactor_without_php = phpactor_bin == nil
       vim.lsp.config("phpactor", {
+        cmd = phpactor_bin and { phpactor_bin, vim.fn.stdpath("data") .. "/mason/packages/phpactor/phpactor.phar", "language-server" } or nil,
         filetypes = { "php" },
         init_options = {
           ["language_server.diagnostics_on_open"] = false,
@@ -155,8 +177,9 @@ return {
 
       vim.lsp.enable({
         "intelephense", "vtsls", "vue_ls", "tailwindcss", "emmet_language_server",
-        "html", "cssls", "eslint", "jsonls", "lua_ls", "phpactor",
+        "html", "cssls", "eslint", "jsonls", "lua_ls",
       })
+      if phpactor_bin then vim.lsp.enable("phpactor") end
     end,
   },
 }
