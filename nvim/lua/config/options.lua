@@ -1,7 +1,9 @@
 local opt = vim.opt
 
 opt.number = true
-opt.relativenumber = false -- números absolutos, como no PhpStorm
+-- números relativos: a linha do cursor mostra o número real e as outras a distância até ela
+-- (para pular com 5k / 5j); os painéis desligam isso nas próprias janelas
+opt.relativenumber = true
 opt.signcolumn = "yes"
 opt.cursorline = true
 opt.termguicolors = true
