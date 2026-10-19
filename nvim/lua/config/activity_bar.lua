@@ -179,6 +179,15 @@ end
 
 local function do_ensure()
   if not (M.buf and vim.api.nvim_buf_is_valid(M.buf)) then M.create_buf() end
+  -- Sobrou só painel (o "q" da tela inicial faz :bd, que fecha a janela de código junto):
+  -- recria a janela de código à esquerda, com a tela inicial, em vez de a barra ocupar tudo
+  if valid(M.win) and not require("config.panels").main_win() then
+    local cur = vim.api.nvim_get_current_win()
+    vim.api.nvim_open_win(vim.api.nvim_create_buf(true, false), true, { split = "left", win = -1 })
+    vim.schedule(function() require("config.dashboard").maybe_show() end)
+    if cur == M.win then cur = vim.api.nvim_get_current_win() end
+    pcall(vim.api.nvim_set_current_win, cur)
+  end
   if not is_edge() then
     -- reposiciona na borda direita, na altura toda (fechar e abrir de novo preserva
     -- a largura dos outros painéis; "mover" a janela fazia o Neovim redistribuir tudo)

@@ -24,6 +24,10 @@ function M.maybe_show()
   if not main then return end
   local b = vim.api.nvim_win_get_buf(main)
   if vim.bo[b].filetype == "snacks_dashboard" or not is_empty(b) then return end
+  -- uma tela inicial só: duas abertas brigam pelo mesmo augroup do snacks (erro E367 ao fechar)
+  for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.bo[vim.api.nvim_win_get_buf(w)].filetype == "snacks_dashboard" then return end
+  end
   Snacks.dashboard.open({ win = main })
   -- some com os "[No Name]" vazios que sobraram
   for _, eb in ipairs(vim.api.nvim_list_bufs()) do
@@ -54,7 +58,10 @@ function M.config()
         { icon = I.claude, key = "a", desc = "Claude Code", action = ":ClaudeCodeFocus" },
         { icon = I.project, key = "p", desc = "Trocar de projeto", action = function() Snacks.picker.projects() end },
         { icon = I.lazy, key = "l", desc = "Plugins", action = ":Lazy" },
-        { icon = I.quit, key = "q", desc = "Sair", action = ":qa" },
+        -- pede confirmação: um "q" que sobra ao fechar um popup não pode fechar o app
+        { icon = I.quit, key = "q", desc = "Sair", action = function()
+          if vim.fn.confirm("Fechar o Neovim?", "&Sim\n&Não", 2) == 1 then vim.cmd("qa") end
+        end },
       },
     },
     sections = {
