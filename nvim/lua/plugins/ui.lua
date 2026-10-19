@@ -246,6 +246,17 @@ return {
           lualine_y = { { "location", padding = { left = 1, right = 1 } } },
           lualine_z = { {
             "branch", icon = "\u{F062C}", color = { fg = c.fg, bg = c.bg_alt },
+            -- buffers que não são arquivo (Commit://message, Git: log…) não têm .git acima
+            -- deles e a branch sumia: nesses casos usa o repositório da pasta atual
+            fmt = function(s)
+              if s ~= "" then return s end
+              local git_dir = require("lualine.components.branch.git_branch").find_git_dir(vim.fn.getcwd())
+              local f = git_dir and io.open(git_dir .. "/HEAD")
+              if not f then return s end
+              local head = f:read("*l") or ""
+              f:close()
+              return head:match("^ref: refs/heads/(.+)$") or head:sub(1, 7)
+            end,
             -- clicar na branch abre o popup de branches (como no PhpStorm)
             on_click = function() require("config.branches").open() end,
           } },
