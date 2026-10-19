@@ -181,18 +181,18 @@ function M.cycle(step)
 end
 
 -- ---------------------------------------------------------------------------
--- Cores: o card ativo tem fundo azulado (como a aba "Local" do PhpStorm),
--- os outros são cards discretos um tom acima do fundo
+-- Cores: o card ativo tem a cor da ilha do editor (parece a alça dela),
+-- os outros são cards discretos quase no tom do fundo
 -- ---------------------------------------------------------------------------
 function M.colors()
   local c = require("config.palette")
-  local card, sel = "#26282C", "#2A3650"
+  local card, sel = "#1F2023", c.bg
   local set = vim.api.nvim_set_hl
   icon_hl_cache = {}
   set(0, "TabCardFill", { bg = c.canvas })
   set(0, "TabCard", { fg = c.fg_faint, bg = card })
   set(0, "TabCardCap", { fg = card, bg = c.canvas })
-  set(0, "TabCardSel", { fg = "#DFE1E5", bg = sel })
+  set(0, "TabCardSel", { fg = require("config.palette").bright, bg = sel })
   set(0, "TabCardCapSel", { fg = sel, bg = c.canvas })
   set(0, "TabCardClose", { fg = c.linenr, bg = card })
   set(0, "TabCardCloseSel", { fg = c.fg_dim, bg = sel })

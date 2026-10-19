@@ -1,5 +1,6 @@
 -- Barra vertical de ferramentas na borda direita, como a do PhpStorm:
--- ícones empilhados que abrem/fecham os painéis; o painel aberto vira um card azulado.
+-- ícones empilhados que abrem/fecham os painéis. Fechado, o ícone é só o contorno;
+-- aberto, o ícone fica preenchido e ganha um traço de destaque do lado do conteúdo.
 local M = {}
 
 local function neotree_open()
@@ -32,10 +33,11 @@ local function to_code()
   return main
 end
 
--- Ícones Codicons (traço fino, parecidos com os do PhpStorm)
+-- Ícones Material (Nerd Font): icon = contorno (fechado), icon_on = preenchido (aberto).
+-- Os Codicons de antes eram finos demais para reconhecer de relance.
 M.items = {
   {
-    icon = "\u{EA83}", name = "Projeto", key = "⌘1",
+    icon = "\u{F0256}", icon_on = "\u{F0770}", name = "Projeto", key = "⌘1",
     active = neotree_open,
     toggle = function()
       if neotree_open() then return vim.cmd("Neotree close") end
@@ -44,7 +46,7 @@ M.items = {
     end,
   },
   {
-    icon = "\u{EAFC}", name = "Commit", key = "⌘0",
+    icon = "\u{F0718}", name = "Commit", key = "⌘0",
     active = function() return require("config.commit").is_open() end,
     toggle = function()
       if not require("config.commit").is_open() then close_slot("commit") end
@@ -52,7 +54,7 @@ M.items = {
     end,
   },
   {
-    icon = "\u{EA91}", name = "Structure", key = "⌘7",
+    icon = "\u{F13D2}", icon_on = "\u{F0645}", name = "Structure", key = "⌘7",
     active = aerial_open,
     toggle = function()
       if aerial_open() then return vim.cmd("AerialCloseAll") end
@@ -63,12 +65,12 @@ M.items = {
   },
   { sep = true },
   {
-    icon = "\u{EA6C}", name = "Problems", key = "⌘6",
+    icon = "\u{F002A}", icon_on = "\u{F0026}", name = "Problems", key = "⌘6",
     active = function() return require("config.problems").is_open() end,
     toggle = function() require("config.problems").toggle() end,
   },
   {
-    icon = "\u{EB2C}", name = "Run", key = "",
+    icon = "\u{F0F1B}", icon_on = "\u{F040A}", name = "Run", key = "",
     active = function() return require("config.run_panel").is_open() end,
     -- ícone verde enquanto algum comando do Run está rodando (mesmo com o painel fechado)
     badge = function()
@@ -80,17 +82,17 @@ M.items = {
     toggle = function() require("config.run_panel").toggle() end,
   },
   {
-    icon = "\u{EA85}", name = "Terminal", key = "⌥F12",
+    icon = "\u{F07B7}", icon_on = "\u{F018D}", name = "Terminal", key = "⌥F12",
     active = function() return require("config.terminal").is_open() end,
     toggle = function() require("config.terminal").toggle() end,
   },
   {
-    icon = "\u{EC10}", name = "Claude Code", key = "⌘⎋",
+    icon = "\u{F0AE3}", icon_on = "\u{F0AE2}", name = "Claude Code", key = "⌘⎋",
     active = function() return require("config.claude_panel").is_open() end,
     toggle = function() vim.cmd("ClaudeCode") end,
   },
   {
-    icon = "\u{EA68}", name = "Git", key = "⌘9",
+    icon = "\u{F062C}", name = "Git", key = "⌘9",
     active = function() return require("config.git_log").is_open() end,
     toggle = function() require("config.git_log").toggle() end,
   },
@@ -101,13 +103,11 @@ M.rows = {}
 
 local function valid(w) return w and vim.api.nvim_win_is_valid(w) end
 
--- Ícone solto quando o painel está fechado; aberto, ganha um quadradinho arredondado
--- discreto. Os ícones da Nerd Font ocupam quase duas células, então o fundo é
--- ponta + ícone + folga + ponta, com uma coluna de margem de cada lado para o destaque
--- ficar no meio da faixa escura (sem encostar na borda da tela).
+-- Cada linha: traço de destaque (só no painel aberto) + folga + ícone + folga.
+-- O ícone da Nerd Font transborda para a célula seguinte, por isso a folga depois dele.
 -- Item com algo rodando (badge, ex.: Run): o ícone fica verde.
 local WIDTH = 6
-local LCAP, RCAP = "\u{E0B6}", "\u{E0B4}" -- meias-luas (Ghostty desenha nativamente)
+local MARK = "\u{258E}" -- ▎ traço fino à esquerda, colado no painel que ele abriu
 
 function M.render()
   if not (M.buf and vim.api.nvim_buf_is_valid(M.buf)) then return end
@@ -119,9 +119,13 @@ function M.render()
     if it.sep then cur = bottom else table.insert(cur, i) end
   end
   local lines, rows = { "" }, {}
+  local active = {}
   local function add(list)
     for _, i in ipairs(list) do
-      table.insert(lines, " " .. LCAP .. M.items[i].icon .. " " .. RCAP .. " ")
+      local ok, on = pcall(M.items[i].active)
+      active[i] = ok and on or false
+      local it = M.items[i]
+      table.insert(lines, (active[i] and MARK or " ") .. " " .. (active[i] and it.icon_on or it.icon) .. "   ")
       rows[#lines] = i
       table.insert(lines, "")
     end
@@ -136,19 +140,14 @@ function M.render()
   vim.bo[M.buf].modifiable = false
   vim.api.nvim_buf_clear_namespace(M.buf, ns, 0, -1)
   for row, i in pairs(rows) do
-    local ok, on = pcall(M.items[i].active)
-    on = ok and on
+    local on = active[i]
     local l = lines[row]
-    local a = 1                    -- meia-lua esquerda (bytes)
-    local b = a + #LCAP            -- miolo: ícone e folga
-    local c = #l - 1 - #RCAP       -- meia-lua direita
     local ok_b, busy_ = pcall(M.items[i].badge or function() return false end)
     busy_ = ok_b and busy_
     local body = on and (busy_ and "ActivityBarActiveBusy" or "ActivityBarActive") or (busy_ and "ActivityBarItemBusy" or "ActivityBarItem")
-    local cap = on and "ActivityBarCap" or "ActivityBarCapOff"
-    vim.api.nvim_buf_set_extmark(M.buf, ns, row - 1, a, { end_col = b, hl_group = cap })
-    vim.api.nvim_buf_set_extmark(M.buf, ns, row - 1, b, { end_col = c, hl_group = body })
-    vim.api.nvim_buf_set_extmark(M.buf, ns, row - 1, c, { end_col = #l - 1, hl_group = cap })
+    local mark = on and #MARK or 1
+    if on then vim.api.nvim_buf_set_extmark(M.buf, ns, row - 1, 0, { end_col = mark, hl_group = "ActivityBarMark" }) end
+    vim.api.nvim_buf_set_extmark(M.buf, ns, row - 1, mark, { end_col = #l, hl_group = body })
   end
 end
 
@@ -346,16 +345,15 @@ local function colors()
   local ok, c = pcall(require, "config.palette")
   if not ok then return end
   local set = vim.api.nvim_set_hl
-  -- Faixa no fundo das ilhas (canvas), ícones cinza-claro; o painel aberto ganha só
-  -- um quadradinho arredondado cinza e o ícone clareia, sem cor de destaque
-  local strip, active = c.canvas, "#2B2D31"
+  -- Faixa no fundo das ilhas (canvas). Fechado: contorno cinza. Aberto: ícone
+  -- preenchido e claro, com o traço de destaque ao lado; sem fundo atrás do ícone
+  local strip = c.canvas
   set(0, "ActivityBar", { fg = c.fg_dim, bg = strip })
-  set(0, "ActivityBarItem", { fg = "#9DA0A8", bg = strip })
-  set(0, "ActivityBarCapOff", { fg = strip, bg = strip })
-  set(0, "ActivityBarActive", { fg = "#DFE1E5", bg = active })
-  set(0, "ActivityBarCap", { fg = active, bg = strip })
+  set(0, "ActivityBarItem", { fg = "#8A8F98", bg = strip }) -- um tom acima do fg_dim: dá para reconhecer o ícone
+  set(0, "ActivityBarActive", { fg = c.bright, bg = strip })
+  set(0, "ActivityBarMark", { fg = c.accent, bg = strip })
   set(0, "ActivityBarItemBusy", { fg = c.hint, bg = strip })
-  set(0, "ActivityBarActiveBusy", { fg = c.hint, bg = active })
+  set(0, "ActivityBarActiveBusy", { fg = c.hint, bg = strip })
 end
 colors()
 vim.api.nvim_create_autocmd("ColorScheme", { callback = colors })

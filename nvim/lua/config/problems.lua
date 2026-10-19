@@ -211,7 +211,7 @@ local function colors()
   local ok, c = pcall(require, "config.palette")
   if not ok then return end
   local set = vim.api.nvim_set_hl
-  set(0, "ProblemsFile", { fg = "#DFE1E5", bold = true })
+  set(0, "ProblemsFile", { fg = require("config.palette").bright, bold = true })
   set(0, "ProblemsText", { fg = c.fg })
   set(0, "ProblemsHint", { fg = c.fg_faint })
   set(0, "ProblemsCount", { fg = c.fg_dim })
@@ -219,7 +219,7 @@ local function colors()
   set(0, "ProblemsWarn", { fg = c.warn, bg = c.bg })
   set(0, "ProblemsInfo", { fg = c.info })
   set(0, "ProblemsBar", { fg = c.fg_dim, bg = c.bg })
-  set(0, "ProblemsSel", { bg = "#2E436E" })
+  set(0, "ProblemsSel", { bg = require("config.palette").sel_row })
 end
 colors()
 vim.api.nvim_create_autocmd("ColorScheme", { callback = colors })

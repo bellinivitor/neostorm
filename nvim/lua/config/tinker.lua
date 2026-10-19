@@ -149,7 +149,7 @@ local function colors()
   set(0, "TinkerTitle", { fg = c.fg, bg = c.bg_float, bold = true })
   set(0, "TinkerNote", { fg = c.fg_faint, bg = c.bg_float })
   set(0, "TinkerCode", { fg = c.fg_dim })
-  set(0, "TinkerOut", { fg = "#DFE1E5" })
+  set(0, "TinkerOut", { fg = require("config.palette").bright })
   set(0, "TinkerError", { fg = c.error })
 end
 colors()

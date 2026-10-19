@@ -814,7 +814,7 @@ local function colors()
   local set = vim.api.nvim_set_hl
   set(0, "BranchesNormal", { fg = c.fg, bg = c.bg_float })
   set(0, "BranchesBorder", { fg = c.border, bg = c.bg_float })
-  set(0, "BranchesSel", { bg = "#2E436E" })
+  set(0, "BranchesSel", { bg = require("config.palette").sel_row })
   set(0, "BranchesHint", { fg = c.fg_faint })
   set(0, "BranchesSep", { fg = c.border })
   set(0, "BranchesHeader", { fg = c.fg, bold = true })

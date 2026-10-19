@@ -2,7 +2,12 @@ return {
   -- O tema "phpstorm" fica em colors/phpstorm.lua (cores tiradas do PhpStorm).
   -- Tokyonight fica de reserva: :colorscheme tokyonight-night
   { "folke/tokyonight.nvim", lazy = true },
-  { "nvim-tree/nvim-web-devicons", lazy = true },
+  {
+    "nvim-tree/nvim-web-devicons",
+    lazy = true,
+    -- ícone do PHP num roxo apagado: numa pasta cheia de .php o roxo saturado virava uma coluna gritando
+    opts = { override_by_extension = { php = { icon = "\u{E608}", color = "#8A82A3", name = "Php" } } },
+  },
 
   -- Snacks: notificações, terminal, lazygit, guias de indentação,
   -- destaque de usos da palavra sob o cursor e seletor de projetos
@@ -211,18 +216,19 @@ return {
   {
     "nvim-lualine/lualine.nvim",
     event = "VeryLazy",
-    -- Barra de baixo como a do PhpStorm: modo à esquerda, infos e branch à direita
+    -- Barra de baixo como a do PhpStorm: modo à esquerda, infos e branch à direita.
+    -- Cores de modo dessaturadas, para o badge não chamar mais atenção que o código
     opts = function()
       local c = require("config.palette")
       local bar = { fg = c.fg_dim, bg = c.canvas } -- barra no fundo das ilhas
-      local function mode(bg) return { a = { fg = "#FFFFFF", bg = bg, gui = "bold" }, b = bar, c = bar } end
+      local function mode(bg) return { a = { fg = c.bright, bg = bg, gui = "bold" }, b = bar, c = bar } end
       local theme = {
-        normal = mode("#2E436E"),
-        insert = mode("#3D6B44"),
-        visual = mode("#6B4C8A"),
-        replace = mode("#8A3A3A"),
-        command = mode("#6B5A2E"),
-        terminal = mode("#2E5E6B"),
+        normal = mode("#36425A"),
+        insert = mode("#3B5643"),
+        visual = mode("#52466A"),
+        replace = mode("#6A3E42"),
+        command = mode("#5A5036"),
+        terminal = mode("#36545C"),
         inactive = { a = bar, b = bar, c = bar },
       }
       return {

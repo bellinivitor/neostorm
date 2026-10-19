@@ -853,7 +853,7 @@ local function colors()
   local ok, c = pcall(require, "config.palette")
   if not ok then return end
   local set = vim.api.nvim_set_hl
-  local bright = "#DFE1E5"
+  local bright = require("config.palette").bright
   local canvas, island = c.canvas, c.bg -- mesmo fundo e mesma ilha do resto do editor
   set(0, "GitLogCanvas", { fg = canvas, bg = canvas })
   set(0, "GitLogIsland", { fg = c.fg, bg = island })
@@ -865,7 +865,7 @@ local function colors()
   set(0, "GitLogBarDel", { fg = "#C9616B", bg = island })
   set(0, "GitLogKey", { fg = c.fg, bg = c.border })
   set(0, "GitLogFilter", { fg = bright, bg = c.diff_text })
-  set(0, "GitLogSel", { bg = "#2E436E" })
+  set(0, "GitLogSel", { bg = require("config.palette").sel_row })
   set(0, "GitLogSelNC", { bg = "#26282C" })
   set(0, "GitLogTreeSel", { bg = "#2A2C31" })
   set(0, "GitLogRule", { fg = "#2C2E33" })
