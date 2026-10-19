@@ -10,6 +10,18 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- Buscas do fzf (grep, arquivos…): se a janela cair no modo normal (tecla digitada antes de ela
+-- abrir), Esc e q não chegavam ao fzf e a busca não fechava mais. Volta ao fzf e manda o Esc.
+vim.api.nvim_create_autocmd("FileType", {
+  group = group,
+  pattern = "fzf",
+  callback = function(ev)
+    for _, k in ipairs({ "<Esc>", "q" }) do
+      vim.keymap.set("n", k, "i<Esc>", { buffer = ev.buf, nowait = true, desc = "Fechar a busca" })
+    end
+  end,
+})
+
 -- Destaca o trecho copiado
 vim.api.nvim_create_autocmd("TextYankPost", {
   group = group,
