@@ -5,16 +5,19 @@
 font-size = 14
 # Mais espaço entre as linhas, como no editor do PhpStorm
 adjust-cell-height = 20%
-background = 1c1d1f
+# fundo = moldura do Neovim (canvas), para a margem da janela não virar uma faixa mais clara
+background = 161719
 foreground = b4b6bc
 cursor-color = cdd0d6
-selection-background = 214283
-selection-foreground = ffffff
-window-padding-x = 10
-window-padding-y = 6
+selection-background = 2c3b57
+selection-foreground = d2d4d9
+window-padding-x = 14
+window-padding-y = 10
 window-padding-balance = true
 macos-titlebar-style = tabs
-window-save-state = always
+# Sem restaurar janelas: cada "code" abre uma instância nova do Ghostty, e uma janela
+# restaurada voltava só com o shell (sem o nvim), por cima da janela do projeto
+window-save-state = never
 mouse-hide-while-typing = true
 copy-on-select = clipboard
 confirm-close-surface = false
