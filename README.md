@@ -206,6 +206,7 @@ cd ~/neostorm && git add -A && git commit -m "descrição" && git push
 | `Cmd+Shift+X` / `Espaço R` | Run Anything |
 | `Option+F12` / `Ctrl+/` / `Espaço t t` | Terminal |
 | `Cmd+T` / `Espaço t N` | Nova aba de terminal |
+| `Cmd+8` / `Espaço t d` | Docker: lista os containers; Enter abre um terminal no container, Ctrl+L os logs |
 | `Option+T` / `Espaço t m` | Terminal: mudar posição (embaixo → direita → flutuante) |
 | `Espaço t b` / `t r` / `t g` | Terminal embaixo / à direita / flutuante |
 | `Ctrl+K` (no terminal) | Voltar para o editor |

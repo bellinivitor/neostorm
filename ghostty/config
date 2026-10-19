@@ -103,6 +103,7 @@ keybind = cmd+1=csi:49;9u
 keybind = cmd+0=csi:48;9u
 keybind = cmd+6=csi:54;9u
 keybind = cmd+7=csi:55;9u
+keybind = cmd+8=csi:56;9u
 keybind = cmd+9=csi:57;9u
 keybind = cmd+k=csi:107;9u
 keybind = cmd+w=csi:119;9u

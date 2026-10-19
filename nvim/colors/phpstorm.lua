@@ -261,6 +261,9 @@ hl("SnacksPickerInputBorder", { fg = c.border, bg = c.bg_float })
 hl("SnacksPickerBorder", { fg = c.border, bg = c.bg_float })
 hl("SnacksPickerTitle", { fg = c.fg, bg = c.bg_float, bold = true })
 hl("SnacksPickerPrompt", { fg = c.accent })
+-- linha selecionada nas listas do Snacks (Docker, projetos…) no mesmo cinza-ardósia do resto
+hl("SnacksPickerListCursorLine", { bg = c.sel_row })
+hl("SnacksPickerPreviewCursorLine", { bg = c.cursorline })
 
 -- Tela inicial (dashboard)
 hl("SnacksDashboardNormal", { fg = c.fg, bg = c.bg })

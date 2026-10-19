@@ -137,6 +137,10 @@ map("n", "<leader>tC", tests("coverage_clear"), { desc = "Esconder a cobertura" 
 -- Conflitos de merge/rebase: lista dos arquivos, continuar e abortar (config/conflicts.lua)
 map("n", "<leader>gx", function() require("config.conflicts").open() end, { desc = "Conflitos" })
 
+-- Docker: lista os containers e abre um terminal neles (Cmd+8, como o Services do PhpStorm)
+map("n", "<D-8>", function() require("config.docker").open() end, { desc = "Docker" })
+map("n", "<leader>td", function() require("config.docker").open() end, { desc = "Docker" })
+
 -- Problems: erros e avisos agrupados por arquivo (Cmd+6, como no PhpStorm)
 map("n", "<D-6>", function() require("config.problems").toggle() end, { desc = "Problems" })
 map("n", "<leader>xx", function() require("config.problems").toggle() end, { desc = "Problems" })

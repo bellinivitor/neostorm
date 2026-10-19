@@ -87,6 +87,12 @@ M.items = {
     toggle = function() require("config.terminal").toggle() end,
   },
   {
+    -- abre a lista de containers (não é um painel: nunca fica "aberto")
+    icon = "\u{F0868}", name = "Docker", key = "⌘8",
+    active = function() return false end,
+    toggle = function() require("config.docker").open() end,
+  },
+  {
     icon = "\u{F0AE3}", icon_on = "\u{F0AE2}", name = "Claude Code", key = "⌘⎋",
     active = function() return require("config.claude_panel").is_open() end,
     toggle = function() vim.cmd("ClaudeCode") end,

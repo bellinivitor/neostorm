@@ -8,7 +8,11 @@ local M = require("config.term_panel")({
   module = "config.terminal",
   other = "config.run_panel",
   new_button = true,
-  tab_icon = function() return "\u{F489}", "TabCard" end, -- 
+  -- abas do Docker (config/docker.lua) com a baleia; as outras com o prompt
+  tab_icon = function(t)
+    if t.spec and t.spec.docker then return require("config.docker").icon, "TermTabDocker" end
+    return "\u{F489}", "TabCard" -- 
+  end,
 })
 
 
@@ -24,7 +28,7 @@ local function colors()
   local sel = vim.api.nvim_get_hl(0, { name = "TabCardSel" }).bg
   -- ícones das abas com o fundo de cada tipo de card:
   -- ✳ laranja do Claude Code; no Run ▶ azul rodando, ✓ verde ok, ✗ vermelho falhou, ■ cinza parado
-  for name, fg in pairs({ TermTabClaude = "#D97757", TermTabRun = c.accent, TermTabOk = c.hint, TermTabFail = c.error, TermTabStopped = c.fg_faint }) do
+  for name, fg in pairs({ TermTabClaude = "#D97757", TermTabRun = c.accent, TermTabOk = c.hint, TermTabFail = c.error, TermTabStopped = c.fg_faint, TermTabDocker = c.git_modified }) do
     set(0, name, { fg = fg, bg = card })
     set(0, name .. "Sel", { fg = fg, bg = sel })
   end
