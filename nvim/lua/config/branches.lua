@@ -28,7 +28,9 @@ end
 local function git(args, cb)
   local cmd = { "git" }
   vim.list_extend(cmd, args)
-  vim.system(cmd, { cwd = st.root or vim.fn.getcwd(), text = true }, function(r) vim.schedule(function() cb(r) end) end)
+  -- sem terminal para digitar senha: falha na hora (e oferecemos configurar a conta) em vez de travar
+  vim.system(cmd, { cwd = st.root or vim.fn.getcwd(), text = true, env = { GIT_TERMINAL_PROMPT = "0" } },
+    function(r) vim.schedule(function() cb(r) end) end)
 end
 
 local function lines(out) return vim.split(vim.trim(out or ""), "\n", { trimempty = true }) end
@@ -185,7 +187,9 @@ function M.update_project()
   notify("Atualizando (git pull)…")
   git({ "pull", "--no-edit" }, function(r)
     if r.code == 0 then notify("Projeto atualizado\n" .. vim.trim(r.stdout or "")); after_change()
-    else notify("git pull falhou:\n" .. (r.stderr or ""), vim.log.levels.ERROR) end
+    elseif not require("config.git_accounts").handle_auth_error(r.stderr, st.root) then
+      notify("git pull falhou:\n" .. (r.stderr or ""), vim.log.levels.ERROR)
+    end
   end)
 end
 
@@ -207,6 +211,8 @@ local function git_report(args, ok_msg, fail_msg)
   git(args, function(r)
     if r.code == 0 then notify(ok_msg); after_change(); return end
     after_change()
+    -- sem credencial para o servidor: oferece configurar a conta (Contas do Git)
+    if require("config.git_accounts").handle_auth_error(r.stderr, repo) then return end
     -- parou em conflito: abre a janela de conflitos em vez de só mostrar o erro
     if require("config.conflicts").check(repo) then
       return notify(fail_msg .. ": há arquivos em conflito para resolver.", vim.log.levels.WARN)
@@ -515,6 +521,7 @@ local function build_items(query)
     { kind = "sep" },
     { kind = "action", icon = I.new, label = "New Branch…", hint = "⌥⌘N", run = function() M.new_branch() end },
     { kind = "action", icon = "", label = "Checkout Tag or Revision…", run = checkout_revision },
+    { kind = "action", icon = "\u{F0004}", label = "Contas do Git…", run = function() require("config.git_accounts").open() end },
     { kind = "sep" },
   }
   query = vim.trim(query or ""):lower()

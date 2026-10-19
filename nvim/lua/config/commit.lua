@@ -62,7 +62,9 @@ end
 local function git_async(args, cb)
   local cmd = { "git" }
   vim.list_extend(cmd, args)
-  vim.system(cmd, { cwd = M.root, text = true }, function(r) vim.schedule(function() cb(r) end) end)
+  -- sem terminal para digitar senha: falha na hora (e oferecemos configurar a conta) em vez de travar
+  vim.system(cmd, { cwd = M.root, text = true, env = { GIT_TERMINAL_PROMPT = "0" } },
+    function(r) vim.schedule(function() cb(r) end) end)
 end
 
 local function load_status()
@@ -431,13 +433,18 @@ local function notify(msg, level) vim.notify(msg, level or vim.log.levels.INFO, 
 
 function M.push()
   notify("Enviando (push)…")
+  local function failed(r)
+    -- sem credencial para o servidor: oferece configurar a conta (Contas do Git)
+    if require("config.git_accounts").handle_auth_error(r.stderr, M.root) then return end
+    notify("Push falhou:\n" .. (r.stderr or ""), vim.log.levels.ERROR)
+  end
   git_async({ "push" }, function(r)
     if r.code ~= 0 and (r.stderr or ""):match("no upstream") then
       return git_async({ "push", "-u", "origin", "HEAD" }, function(r2)
-        if r2.code == 0 then notify("Push feito") else notify("Push falhou:\n" .. (r2.stderr or ""), vim.log.levels.ERROR) end
+        if r2.code == 0 then notify("Push feito") else failed(r2) end
       end)
     end
-    if r.code == 0 then notify("Push feito") else notify("Push falhou:\n" .. (r.stderr or ""), vim.log.levels.ERROR) end
+    if r.code == 0 then notify("Push feito") else failed(r) end
   end)
 end
 

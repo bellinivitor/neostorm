@@ -151,3 +151,7 @@ map("n", "<leader>le", route_example, { desc = "Exemplo de requisição da rota"
 local function tinker() require("config.tinker").at_cursor() end
 map({ "n", "v" }, "<D-M-t>", tinker, { desc = "Tinker na seleção" })
 map({ "n", "v" }, "<leader>lt", tinker, { desc = "Tinker na seleção" })
+
+-- Contas do Git: credencial (Chaves do macOS) e identidade de commit por servidor (config/git_accounts.lua)
+map("n", "<leader>gA", function() require("config.git_accounts").open() end, { desc = "Contas do Git" })
+vim.api.nvim_create_user_command("GitAccounts", function() require("config.git_accounts").open() end, { desc = "Contas do Git" })
